@@ -35,7 +35,7 @@
         </div>
     </div>
 
-    <script>
+<script>
     function toggleChat() {
         const win = document.getElementById('chat-window');
         win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
@@ -45,37 +45,48 @@
         const input = document.getElementById('userInput');
         const box = document.getElementById('msgs');
         const text = input.value.trim();
+        
         if(!text) return;
 
-        // Lägg till användarens meddelande
+        // 1. SKRIV UT ANVÄNDARENS TEXT DIREKT
         const uDiv = document.createElement('div');
         uDiv.className = 'msg user';
         uDiv.textContent = text;
         box.appendChild(uDiv);
         input.value = '';
+        box.scrollTop = box.scrollHeight;
 
         try {
+            // 2. SKICKA TILL SERVERLÖS FUNKTION
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: text })
             });
+
             const data = await res.json();
             
-            // Visa AI:ns svar
+            // 3. SKRIV UT AI-SVARET
             const aDiv = document.createElement('div');
             aDiv.className = 'msg ai';
-            aDiv.textContent = data.text; // Vi läser direkt från .text nu
+            aDiv.textContent = data.reply || data.text || "Hovmästaren är tillfälligt upptagen.";
             box.appendChild(aDiv);
+            
         } catch (e) {
             const eDiv = document.createElement('div');
             eDiv.className = 'msg ai';
-            eDiv.textContent = "Kunde inte nå servern.";
+            eDiv.textContent = "Kunde inte nå servern. Kontrollera din internet eller Vercel-inställningar.";
             box.appendChild(eDiv);
         }
         box.scrollTop = box.scrollHeight;
     }
-    document.getElementById('userInput').onkeydown = (e) => { if(e.key === 'Enter') send() };
+    
+    // Gör så att man kan trycka på Enter
+    document.getElementById('userInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            send();
+        }
+    });
 </script>
 </body>
 </html>
