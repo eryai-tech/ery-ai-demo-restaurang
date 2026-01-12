@@ -3,37 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ery Bistro | Demo</title>
+    <title>Ery Bistro</title>
     <style>
-        :root { --gold: #c5a059; --dark: #121212; }
-        body { margin: 0; font-family: sans-serif; background-color: var(--dark); color: white; }
-        .navbar { padding: 20px; text-align: center; border-bottom: 1px solid #333; }
-        #ery-btn { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; }
-        #chat-window { position: fixed; bottom: 100px; right: 30px; width: 320px; height: 450px; background: white; border-radius: 10px; display: none; flex-direction: column; color: #333; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        #msgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 10px; border-radius: 10px; font-size: 14px; max-width: 85%; }
-        .ai { background: #f0f0f0; align-self: flex-start; }
-        .user { background: var(--gold); color: white; align-self: flex-end; }
-        .input-box { padding: 10px; border-top: 1px solid #eee; display: flex; gap: 5px; }
-        input { flex: 1; padding: 8px; }
+        body {
+            font-family: 'Georgia', serif;
+            background: #1a1a1a;
+            color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 2px solid #d4af37;
+            padding: 40px;
+            background: rgba(0,0,0,0.8);
+        }
+        h1 { color: #d4af37; font-size: 3em; margin-bottom: 10px; }
+        .menu-item { margin: 20px 0; font-size: 1.2em; }
+        
+        /* Chat-fönster */
+        #chat-window {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            height: 400px;
+            background: white;
+            color: black;
+            border-radius: 10px;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        #msgs { flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; }
+        .msg { margin: 5px; padding: 8px; border-radius: 5px; max-width: 80%; }
+        .user { background: #d4af37; align-self: flex-end; color: white; }
+        .ai { background: #eee; align-self: flex-start; }
+        .chat-input { display: flex; border-top: 1px solid #ddd; }
+        .chat-input input { flex: 1; border: none; padding: 10px; outline: none; }
+        .chat-input button { background: #d4af37; border: none; color: white; padding: 10px; cursor: pointer; }
+        
+        .chat-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #d4af37;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
-    <div class="navbar">ERY BISTRO - DEMO</div>
+<div class="container">
+    <h1>ERY BISTRO</h1>
+    <p>En smakupplevelse utöver det vanliga</p>
+    <hr style="border: 1px solid #d4af37; width: 50%;">
+    
+    <h2>KVÄLLENS MENY</h2>
+    <div class="menu-item">Entrecôte med tryffelsmör • 345 kr</div>
+    <div class="menu-item">Ratatouille Provencale • 225 kr</div>
+    <div class="menu-item">Crème Brûlée • 115 kr</div>
+</div>
 
-    <div id="ery-btn" onclick="toggleChat()">💬</div>
+<div class="chat-toggle" onclick="toggleChat()">Prata med Hovmästaren</div>
 
-    <div id="chat-window">
-        <div style="background:var(--dark); color:var(--gold); padding:10px; font-weight:bold;">Hovmästare Ery</div>
-        <div id="msgs">
-            <div class="msg ai">Hej! Hur kan jag hjälpa dig på Ery Bistro idag?</div>
-        </div>
-        <div class="input-box">
-            <input type="text" id="userInput" placeholder="Skriv här...">
-            <button onclick="send()">Sänd</button>
-        </div>
+<div id="chat-window">
+    <div style="background:#d4af37; color:white; padding:10px; border-radius:10px 10px 0 0;">
+        Hovmästare Ery
+        <span onclick="toggleChat()" style="float:right; cursor:pointer;">×</span>
     </div>
+    <div id="msgs">
+        <div class="msg ai">Välkommen till Ery Bistro. Vill du boka ett bord eller se vår meny?</div>
+    </div>
+    <div class="chat-input">
+        <input type="text" id="userInput" placeholder="Skriv här...">
+        <button onclick="send()">SÄND</button>
+    </div>
+</div>
 
 <script>
     function toggleChat() {
@@ -47,36 +100,38 @@
         const text = input.value.trim();
         if(!text) return;
 
-        // Visa användarens meddelande
+        // Lägg till användarens bubbla
         const uDiv = document.createElement('div');
         uDiv.className = 'msg user';
         uDiv.textContent = text;
         box.appendChild(uDiv);
         input.value = '';
+        box.scrollTop = box.scrollHeight;
 
         try {
+            // Vi anropar api/chat i mappen api
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: text })
             });
-
             const data = await res.json();
             
-            // Visa svaret
             const aDiv = document.createElement('div');
             aDiv.className = 'msg ai';
-            aDiv.textContent = data.text || "Tomt svar från servern.";
+            aDiv.textContent = data.text;
             box.appendChild(aDiv);
         } catch (e) {
             const eDiv = document.createElement('div');
             eDiv.className = 'msg ai';
-            eDiv.textContent = "Kunde inte nå /api/chat - kontrollera mappen!";
+            eDiv.textContent = "Kunde inte nå hovmästaren.";
             box.appendChild(eDiv);
         }
         box.scrollTop = box.scrollHeight;
     }
+    
     document.getElementById('userInput').onkeydown = (e) => { if(e.key === 'Enter') send() };
 </script>
+
 </body>
 </html>
