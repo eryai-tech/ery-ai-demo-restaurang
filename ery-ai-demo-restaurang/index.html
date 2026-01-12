@@ -66,43 +66,62 @@
         </div>
     </div>
 
-    <script>
-        function toggleChat() {
-            const win = document.getElementById('chat-window');
-            win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
-        }
+   <script>
+    function toggleChat() {
+        const win = document.getElementById('chat-window');
+        win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
+    }
 
-        async function send() {
-            const input = document.getElementById('userInput');
-            const box = document.getElementById('msgs');
-            const text = input.value.trim();
-            if(!text) return;
+    async function send() {
+        const input = document.getElementById('userInput');
+        const box = document.getElementById('msgs');
+        const text = input.value.trim();
+        if(!text) return;
 
-            const uDiv = document.createElement('div');
-            uDiv.className = 'msg user';
-            uDiv.textContent = text;
-            box.appendChild(uDiv);
-            input.value = '';
+        // Visa användarens meddelande
+        const uDiv = document.createElement('div');
+        uDiv.className = 'msg user';
+        uDiv.textContent = text;
+        box.appendChild(uDiv);
+        input.value = '';
+        box.scrollTop = box.scrollHeight;
 
-            try {
-                const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: text })
-                });
-                const data = await res.json();
-                const aiText = data.candidates[0].content.parts[0].text;
-                
-                const aDiv = document.createElement('div');
-                aDiv.className = 'msg ai';
-                aDiv.textContent = aiText;
-                box.appendChild(aDiv);
-            } catch (e) {
-                console.error("Error");
+        try {
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: text })
+            });
+
+            const data = await res.json();
+            console.log("Svar från server:", data); // Syns i webbläsarens konsol (F12)
+
+            let aiText = "";
+            
+            // Kontrollera om vi fick ett svar från Gemini
+            if (data.candidates && data.candidates[0].content.parts[0].text) {
+                aiText = data.candidates[0].content.parts[0].text;
+            } else if (data.error) {
+                aiText = "Systemfel: " + data.error.message;
+            } else {
+                aiText = "Hovmästaren är upptagen just nu (felaktigt svar från API).";
             }
-            box.scrollTop = box.scrollHeight;
+            
+            const aDiv = document.createElement('div');
+            aDiv.className = 'msg ai';
+            aDiv.textContent = aiText;
+            box.appendChild(aDiv);
+
+        } catch (e) {
+            console.error("Fetch Error:", e);
+            const eDiv = document.createElement('div');
+            eDiv.className = 'msg ai';
+            eDiv.textContent = "Kunde inte nå servern. Kontrollera din internetanslutning.";
+            box.appendChild(eDiv);
         }
-        document.getElementById('userInput').onkeydown = (e) => { if(e.key === 'Enter') send() };
-    </script>
+        box.scrollTop = box.scrollHeight;
+    }
+    document.getElementById('userInput').onkeydown = (e) => { if(e.key === 'Enter') send() };
+</script>
 </body>
 </html>
