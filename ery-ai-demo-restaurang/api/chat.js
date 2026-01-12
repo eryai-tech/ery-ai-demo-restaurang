@@ -1,9 +1,8 @@
 export default async function handler(req, res) {
-  const { prompt } = req.body;
   const API_KEY = process.env.GEMINI_API_KEY;
 
   if (!API_KEY) {
-    return res.status(200).json({ text: "Systemet hittar ingen API-nyckel i Vercel. Kontrollera Environment Variables." });
+    return res.status(200).json({ error: "API-nyckel saknas i Vercel Settings!" });
   }
 
   try {
@@ -11,15 +10,14 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: "Du är hovmästaren på Ery Bistro. Svara kort och elegant på: " + prompt }] }]
+        contents: [{ parts: [{ text: "Du är en artig hovmästare. Svara kort på: " + req.body.prompt }] }]
       })
     });
 
     const data = await response.json();
-    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Hovmästaren funderar... (Inget svar från AI)";
-    
-    res.status(200).json({ text: aiText });
-  } catch (error) {
-    res.status(500).json({ text: "Ett fel uppstod i kontakten med hovmästaren." });
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "Jag kunde inte formulera ett svar just nu.";
+    res.status(200).json({ reply: text });
+  } catch (err) {
+    res.status(500).json({ error: "Internt serverfel." });
   }
 }
