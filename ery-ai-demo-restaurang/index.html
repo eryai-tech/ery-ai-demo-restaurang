@@ -45,19 +45,16 @@
         const input = document.getElementById('userInput');
         const box = document.getElementById('msgs');
         const text = input.value.trim();
-        
         if(!text) return;
 
-        // 1. SKRIV UT ANVÄNDARENS TEXT DIREKT
+        // Visa användarens meddelande
         const uDiv = document.createElement('div');
         uDiv.className = 'msg user';
         uDiv.textContent = text;
         box.appendChild(uDiv);
         input.value = '';
-        box.scrollTop = box.scrollHeight;
 
         try {
-            // 2. SKICKA TILL SERVERLÖS FUNKTION
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -66,27 +63,20 @@
 
             const data = await res.json();
             
-            // 3. SKRIV UT AI-SVARET
+            // Visa svaret
             const aDiv = document.createElement('div');
             aDiv.className = 'msg ai';
-            aDiv.textContent = data.reply || data.text || "Hovmästaren är tillfälligt upptagen.";
+            aDiv.textContent = data.text || "Tomt svar från servern.";
             box.appendChild(aDiv);
-            
         } catch (e) {
             const eDiv = document.createElement('div');
             eDiv.className = 'msg ai';
-            eDiv.textContent = "Kunde inte nå servern. Kontrollera din internet eller Vercel-inställningar.";
+            eDiv.textContent = "Kunde inte nå /api/chat - kontrollera mappen!";
             box.appendChild(eDiv);
         }
         box.scrollTop = box.scrollHeight;
     }
-    
-    // Gör så att man kan trycka på Enter
-    document.getElementById('userInput').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            send();
-        }
-    });
+    document.getElementById('userInput').onkeydown = (e) => { if(e.key === 'Enter') send() };
 </script>
 </body>
 </html>
