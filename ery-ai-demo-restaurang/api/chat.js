@@ -1,4 +1,6 @@
-export default async function handler(req, res) {
+const fetch = require('node-fetch'); // Om detta ger fel, ta bort denna rad helt
+
+module.exports = async (req, res) => {
   // Kontrollera att det är ett POST-anrop
   if (req.method !== 'POST') {
     return res.status(405).json({ text: "Method Not Allowed" });
@@ -24,16 +26,15 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // Om Google skickar ett felmeddelande
     if (data.error) {
       return res.status(200).json({ text: "API-fel: " + data.error.message });
     }
 
-    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Hovmästaren är lite upptagen, försök igen.";
+    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Hovmästaren är lite upptagen.";
     
     return res.status(200).json({ text: aiText });
 
   } catch (error) {
-    return res.status(500).json({ text: "Ett internt fel uppstod: " + error.message });
+    return res.status(500).json({ text: "Serverfel: " + error.message });
   }
-}
+};
