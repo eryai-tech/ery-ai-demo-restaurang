@@ -30,7 +30,6 @@
       overflow-x: hidden;
     }
 
-    /* Top Bar */
     .top-bar {
       background: var(--deep-green);
       color: var(--gold);
@@ -41,7 +40,6 @@
       text-transform: uppercase;
     }
 
-    /* Navigation */
     nav {
       position: sticky;
       top: 0;
@@ -63,11 +61,7 @@
       letter-spacing: 0.05em;
     }
 
-    nav ul {
-      display: flex;
-      list-style: none;
-      gap: 3rem;
-    }
+    nav ul { display: flex; list-style: none; gap: 3rem; }
 
     nav a {
       color: var(--charcoal);
@@ -91,15 +85,9 @@
       transition: width 0.3s;
     }
 
-    nav a:hover {
-      color: var(--gold);
-    }
+    nav a:hover { color: var(--gold); }
+    nav a:hover::after { width: 100%; }
 
-    nav a:hover::after {
-      width: 100%;
-    }
-
-    /* Hero - Massive Impact */
     .hero {
       height: 90vh;
       position: relative;
@@ -131,7 +119,6 @@
       text-transform: uppercase;
       color: var(--gold);
       margin-bottom: 2rem;
-      font-weight: 400;
     }
 
     .hero h1 {
@@ -170,10 +157,8 @@
       background: var(--charcoal);
       color: var(--gold);
       transform: translateY(-3px);
-      box-shadow: 0 15px 50px rgba(212, 165, 116, 0.5);
     }
 
-    /* About Section - Image + Text */
     .about-section {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -217,16 +202,9 @@
       line-height: 1.9;
     }
 
-    /* Menu Section - Cards with Images */
-    .menu-section {
-      padding: 10rem 5%;
-      background: var(--white);
-    }
+    .menu-section { padding: 10rem 5%; background: var(--white); }
 
-    .menu-header {
-      text-align: center;
-      margin-bottom: 6rem;
-    }
+    .menu-header { text-align: center; margin-bottom: 6rem; }
 
     .menu-header h2 {
       font-family: 'Cinzel', serif;
@@ -235,11 +213,7 @@
       margin-bottom: 1.5rem;
     }
 
-    .menu-header p {
-      font-size: 1.25rem;
-      color: var(--charcoal);
-      opacity: 0.8;
-    }
+    .menu-header p { font-size: 1.25rem; color: var(--charcoal); opacity: 0.8; }
 
     .menu-grid {
       display: grid;
@@ -266,11 +240,7 @@
       width: 100%;
       height: 280px;
       background: linear-gradient(135deg, var(--deep-green), var(--charcoal));
-      display: flex;
-      align-items: center;
-      justify-content: center;
       position: relative;
-      overflow: hidden;
     }
 
     .dish-image::before {
@@ -285,17 +255,17 @@
     .dish-image::after {
       content: attr(data-dish);
       position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       font-family: 'Cinzel', serif;
-      font-size: 3rem;
+      font-size: 2.5rem;
       font-weight: 600;
-      color: rgba(212,165,116,0.15);
+      color: rgba(212,165,116,0.2);
       text-transform: uppercase;
-      letter-spacing: 0.1em;
     }
 
-    .dish-content {
-      padding: 2.5rem;
-    }
+    .dish-content { padding: 2.5rem; }
 
     .dish-content h3 {
       font-family: 'Cinzel', serif;
@@ -312,19 +282,9 @@
       display: block;
     }
 
-    .dish-content p {
-      font-size: 1rem;
-      color: var(--charcoal);
-      opacity: 0.8;
-      line-height: 1.7;
-    }
+    .dish-content p { font-size: 1rem; color: var(--charcoal); opacity: 0.8; line-height: 1.7; }
 
-    /* Info Banner */
-    .info-banner {
-      background: var(--deep-green);
-      color: var(--white);
-      padding: 6rem 5%;
-    }
+    .info-banner { background: var(--deep-green); color: var(--white); padding: 6rem 5%; }
 
     .info-container {
       max-width: 1400px;
@@ -342,18 +302,9 @@
       margin-bottom: 1rem;
     }
 
-    .info-box p {
-      font-size: 1.05rem;
-      line-height: 1.8;
-      opacity: 0.9;
-    }
+    .info-box p { font-size: 1.05rem; line-height: 1.8; opacity: 0.9; }
 
-    /* Reservation CTA */
-    .cta-section {
-      padding: 10rem 5%;
-      text-align: center;
-      background: var(--cream);
-    }
+    .cta-section { padding: 10rem 5%; text-align: center; background: var(--cream); }
 
     .cta-section h2 {
       font-family: 'Cinzel', serif;
@@ -371,49 +322,41 @@
       margin-right: auto;
     }
 
-    /* Chat Widget - Luxe */
+    /* Chat Widget */
     #ery-trigger {
       position: fixed;
-      bottom: 3rem;
-      right: 3rem;
-      width: 75px;
-      height: 75px;
+      bottom: 2rem;
+      right: 2rem;
+      width: 70px;
+      height: 70px;
       background: var(--gold);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 15px 50px rgba(212, 165, 116, 0.4);
+      box-shadow: 0 10px 40px rgba(212, 165, 116, 0.4);
       z-index: 1000;
-      transition: all 0.4s;
+      transition: all 0.3s;
     }
 
-    #ery-trigger:hover {
-      transform: scale(1.1) rotate(5deg);
-      box-shadow: 0 20px 60px rgba(212, 165, 116, 0.6);
-    }
+    #ery-trigger:hover { transform: scale(1.1); }
 
-    #ery-trigger svg {
-      width: 35px;
-      height: 35px;
-      stroke: var(--charcoal);
-      stroke-width: 2.5;
-    }
+    #ery-trigger svg { width: 30px; height: 30px; stroke: var(--charcoal); stroke-width: 2.5; }
 
     #ery-window {
       position: fixed;
-      bottom: 120px;
-      right: 3rem;
-      width: 450px;
-      max-width: calc(100vw - 6rem);
-      height: 700px;
-      max-height: calc(100vh - 160px);
+      bottom: 100px;
+      right: 2rem;
+      width: 400px;
+      max-width: calc(100vw - 2rem);
+      height: 600px;
+      max-height: calc(100vh - 140px);
       background: var(--white);
       border-radius: 20px;
       display: none;
       flex-direction: column;
-      box-shadow: 0 30px 100px rgba(0,0,0,0.25);
+      box-shadow: 0 25px 80px rgba(0,0,0,0.2);
       z-index: 1000;
       overflow: hidden;
       border: 1px solid rgba(212,165,116,0.2);
@@ -421,7 +364,7 @@
 
     #ery-window header {
       background: linear-gradient(135deg, var(--deep-green), #1c3d1e);
-      padding: 2.5rem;
+      padding: 1.5rem 2rem;
       color: white;
       display: flex;
       justify-content: space-between;
@@ -430,7 +373,7 @@
 
     #ery-window header h3 {
       font-family: 'Cinzel', serif;
-      font-size: 1.75rem;
+      font-size: 1.4rem;
       font-weight: 500;
       margin: 0;
     }
@@ -438,228 +381,162 @@
     #close-btn {
       color: var(--gold);
       cursor: pointer;
-      font-size: 36px;
+      font-size: 32px;
       line-height: 1;
-      opacity: 0.9;
       transition: all 0.2s;
     }
 
-    #close-btn:hover {
-      opacity: 1;
-      transform: rotate(90deg);
-    }
+    #close-btn:hover { transform: rotate(90deg); }
 
     #chat-box {
       flex: 1;
       overflow-y: auto;
-      padding: 2.5rem;
+      padding: 1.25rem;
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: 0.875rem;
       background: var(--cream);
     }
 
     .msg {
-      padding: 1.25rem 1.75rem;
-      border-radius: 20px;
-      font-size: 1rem;
-      max-width: 75%;
-      line-height: 1.7;
+      padding: 0.875rem 1.125rem;
+      border-radius: 16px;
+      font-size: 0.9rem;
+      max-width: 85%;
+      line-height: 1.5;
       word-wrap: break-word;
-      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      hyphens: auto;
+      -webkit-hyphens: auto;
     }
 
     .ai {
       background: var(--white);
       color: var(--charcoal);
       align-self: flex-start;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      border: 1px solid rgba(212,165,116,0.15);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border: 1px solid rgba(212,165,116,0.1);
     }
 
     .user {
       background: linear-gradient(135deg, var(--gold), #e0b885);
       color: var(--charcoal);
       align-self: flex-end;
-      box-shadow: 0 4px 20px rgba(212,165,116,0.3);
     }
 
-    .typing {
-      font-size: 0.9rem;
-      opacity: 0.7;
-      font-style: italic;
-    }
+    .typing { font-size: 0.85rem; opacity: 0.6; font-style: italic; }
 
     .input-area {
-      padding: 2rem;
+      padding: 1rem;
       background: var(--white);
       display: flex;
-      gap: 1rem;
-      border-top: 1px solid rgba(212,165,116,0.2);
+      gap: 0.625rem;
+      border-top: 1px solid rgba(212,165,116,0.15);
     }
 
     #uIn {
       flex: 1;
-      padding: 1.125rem 1.5rem;
+      padding: 0.875rem 1rem;
       border-radius: 12px;
-      border: 2px solid rgba(212,165,116,0.3);
+      border: 2px solid rgba(212,165,116,0.25);
       background: var(--cream);
       color: var(--charcoal);
       outline: none;
-      font-size: 1rem;
+      font-size: 16px;
       font-family: 'Lora', serif;
-      transition: all 0.3s;
+      transition: border-color 0.3s;
     }
 
-    #uIn:focus {
-      border-color: var(--gold);
-      background: var(--white);
-    }
+    #uIn:focus { border-color: var(--gold); background: var(--white); }
 
     button {
       background: var(--gold);
       border: none;
-      padding: 1.125rem 2.5rem;
+      padding: 0.875rem 1.5rem;
       border-radius: 12px;
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       cursor: pointer;
       color: var(--charcoal);
       transition: all 0.3s;
       font-family: 'Lora', serif;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.05em;
     }
 
-    button:hover {
-      background: var(--deep-green);
-      color: var(--gold);
-      transform: translateY(-2px);
-    }
+    button:hover { background: var(--deep-green); color: var(--gold); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    /* Powered by branding */
     .powered-by {
-      padding: 0.75rem 2rem;
+      padding: 0.5rem;
       background: var(--cream);
-      border-top: 1px solid rgba(212,165,116,0.15);
+      border-top: 1px solid rgba(212,165,116,0.1);
       text-align: center;
     }
 
     .powered-by a {
-      font-size: 0.7rem;
+      font-size: 0.6rem;
       color: var(--charcoal);
-      opacity: 0.5;
+      opacity: 0.4;
       text-decoration: none;
-      letter-spacing: 0.05em;
-      transition: opacity 0.3s;
+      letter-spacing: 0.03em;
     }
 
-    .powered-by a:hover {
-      opacity: 0.8;
-    }
+    .powered-by a:hover { opacity: 0.7; }
 
     .powered-by svg {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       vertical-align: middle;
-      margin-right: 4px;
-      opacity: 0.5;
+      margin-right: 3px;
+      opacity: 0.4;
     }
 
-    /* Footer */
     footer {
       background: var(--charcoal);
       color: rgba(255,255,255,0.7);
       text-align: center;
       padding: 5rem 2rem;
       font-size: 0.9rem;
-      letter-spacing: 0.05em;
     }
 
-    /* Responsive */
     @media (max-width: 1024px) {
-      .menu-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .about-section {
-        grid-template-columns: 1fr;
-      }
-
-      .about-image {
-        min-height: 400px;
-      }
-
-      .about-content {
-        padding: 5rem 3rem;
-      }
-
-      .info-container {
-        grid-template-columns: 1fr;
-        gap: 3rem;
-      }
+      .menu-grid { grid-template-columns: repeat(2, 1fr); }
+      .about-section { grid-template-columns: 1fr; }
+      .about-image { min-height: 400px; }
+      .about-content { padding: 5rem 3rem; }
+      .info-container { grid-template-columns: 1fr; gap: 3rem; }
     }
 
     @media (max-width: 768px) {
-      nav {
-        padding: 1.5rem 5%;
-      }
-
-      nav ul {
-        display: none;
-      }
-
-      .hero h1 {
-        font-size: 3.5rem;
-      }
-
-      .menu-grid {
-        grid-template-columns: 1fr;
-        gap: 2rem;
-      }
-
-      .menu-section,
-      .cta-section {
-        padding: 6rem 5%;
-      }
-
-      .menu-header h2,
-      .cta-section h2 {
-        font-size: 2.5rem;
-      }
-
-      .about-content h2 {
-        font-size: 2rem;
-      }
+      nav { padding: 1.5rem 5%; }
+      nav ul { display: none; }
+      .hero h1 { font-size: 3.5rem; }
+      .menu-grid { grid-template-columns: 1fr; gap: 2rem; }
+      .menu-section, .cta-section { padding: 6rem 5%; }
+      .menu-header h2, .cta-section h2 { font-size: 2.5rem; }
+      .about-content h2 { font-size: 2rem; }
 
       #ery-window {
-        width: calc(100vw - 2rem);
-        right: 1rem;
-        bottom: 100px;
+        width: calc(100vw - 1rem);
+        height: calc(100vh - 120px);
+        max-height: none;
+        right: 0.5rem;
+        bottom: 85px;
+        border-radius: 16px;
       }
 
-      #ery-trigger {
-        width: 65px;
-        height: 65px;
-        bottom: 2rem;
-        right: 2rem;
-      }
+      #ery-trigger { width: 60px; height: 60px; bottom: 1rem; right: 1rem; }
+      #chat-box { padding: 1rem; }
+      .msg { max-width: 88%; font-size: 0.875rem; padding: 0.75rem 1rem; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Bar -->
-  <div class="top-bar">
-    Reservationer öppna · Authentic Italian Cuisine · Since 1995
-  </div>
+  <div class="top-bar">Reservationer öppna · Authentic Italian Cuisine · Since 1995</div>
 
-  <!-- Navigation -->
   <nav>
     <div class="logo">BELLA ITALIA</div>
     <ul>
@@ -669,7 +546,6 @@
     </ul>
   </nav>
 
-  <!-- Hero -->
   <section class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-content">
@@ -680,7 +556,6 @@
     </div>
   </section>
 
-  <!-- About Section -->
   <section class="about-section" id="om">
     <div class="about-image"></div>
     <div class="about-content">
@@ -691,83 +566,73 @@
     </div>
   </section>
 
-  <!-- Menu Section -->
   <section class="menu-section" id="menu">
     <div class="menu-header">
       <h2>Vår Meny</h2>
       <p>Signaturrätter tillagade med passion och precision</p>
     </div>
-
     <div class="menu-grid">
       <div class="dish-card">
         <div class="dish-image" data-dish="Carbonara"></div>
         <div class="dish-content">
           <h3>Spaghetti Carbonara</h3>
           <span class="dish-price">189 kr</span>
-          <p>Klassisk romersk pasta med guanciale, ägg och pecorino romano. Tillagad enligt traditionellt recept från Rom.</p>
+          <p>Klassisk romersk pasta med guanciale, ägg och pecorino romano.</p>
         </div>
       </div>
-
       <div class="dish-card">
         <div class="dish-image" data-dish="Risotto"></div>
         <div class="dish-content">
           <h3>Risotto ai Funghi</h3>
           <span class="dish-price">165 kr</span>
-          <p>Krämigt risotto med porcini-svamp, vitt vin och parmigiano reggiano. Varje portion tillagas individuellt.</p>
+          <p>Krämigt risotto med porcini-svamp, vitt vin och parmigiano reggiano.</p>
         </div>
       </div>
-
       <div class="dish-card">
         <div class="dish-image" data-dish="Osso Buco"></div>
         <div class="dish-content">
           <h3>Osso Buco Milanese</h3>
           <span class="dish-price">299 kr</span>
-          <p>Kalvskanka långkokt i vitt vin med gremolata och saffransrisotto. En milanesisk klassiker.</p>
+          <p>Kalvskanka långkokt i vitt vin med gremolata och saffransrisotto.</p>
         </div>
       </div>
-
       <div class="dish-card">
         <div class="dish-image" data-dish="Pizza"></div>
         <div class="dish-content">
           <h3>Pizza Margherita</h3>
           <span class="dish-price">145 kr</span>
-          <p>San Marzano tomater, mozzarella di bufala, basilika. Bakad i vår stenugn vid 450°C.</p>
+          <p>San Marzano tomater, mozzarella di bufala, basilika.</p>
         </div>
       </div>
-
       <div class="dish-card">
         <div class="dish-image" data-dish="Branzino"></div>
         <div class="dish-content">
           <h3>Branzino al Forno</h3>
           <span class="dish-price">289 kr</span>
-          <p>Ugnsbakad havsabborre med citron, timjan och säsongens italienska primörgrönsaker.</p>
+          <p>Ugnsbakad havsabborre med citron, timjan och grönsaker.</p>
         </div>
       </div>
-
       <div class="dish-card">
         <div class="dish-image" data-dish="Tiramisu"></div>
         <div class="dish-content">
           <h3>Tiramisu Classico</h3>
           <span class="dish-price">75 kr</span>
-          <p>Vår signatur-dessert med mascarpone, espresso och kakao. Gjord frisk varje dag.</p>
+          <p>Vår signatur-dessert med mascarpone, espresso och kakao.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Info Banner -->
   <section class="info-banner">
     <div class="info-container">
       <div class="info-box">
         <h3>📍 Adress</h3>
         <p>Strandvägen 42<br>114 56 Stockholm<br>Östermalm</p>
       </div>
-
       <div class="info-box">
         <h3>⏰ Öppettider</h3>
         <p>Måndag–Torsdag 11:00–22:00<br>Fredag–Lördag 11:00–23:00<br>Söndag 12:00–22:00</p>
       </div>
-
       <div class="info-box">
         <h3>💬 Bordsreservation</h3>
         <p>Kontakta vår AI-assistent Sofia<br>via chatten för direktreservation<br>och menyfrågor</p>
@@ -775,14 +640,12 @@
     </div>
   </section>
 
-  <!-- CTA Section -->
   <section class="cta-section" id="reservera">
     <h2>Reservera Bord</h2>
     <p>Upplev äkta italiensk gastronomi i Stockholm. Använd vår intelligenta bokningsassistent Sofia för snabb och enkel reservation.</p>
     <a href="#" onclick="toggleChat(); return false;" class="hero-btn">Öppna Chatten</a>
   </section>
 
-  <!-- Chat Widget -->
   <div id="ery-trigger" onclick="toggleChat()">
     <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -798,7 +661,7 @@
       <div class="msg ai">Buongiorno! 🍝 Jag heter Sofia och hjälper dig gärna med bordsreservationer, menyfrågor eller rekommendationer. Hur kan jag assistera dig idag?</div>
     </div>
     <div class="input-area">
-      <input type="text" id="uIn" placeholder="Skriv ditt meddelande här..." autocomplete="off">
+      <input type="text" id="uIn" placeholder="Skriv här..." autocomplete="off">
       <button onclick="send()">Skicka</button>
     </div>
     <div class="powered-by">
@@ -811,18 +674,17 @@
     </div>
   </div>
 
-  <!-- Footer -->
   <footer>
     <p>&copy; 2026 Bella Italia Stockholm · Authentic Italian Dining Since 1995</p>
   </footer>
 
   <script>
+    let chatHistory = [];
+
     function toggleChat() {
       const win = document.getElementById('ery-window');
       win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
-      if (win.style.display === 'flex') {
-        document.getElementById('uIn').focus();
-      }
+      if (win.style.display === 'flex') document.getElementById('uIn').focus();
     }
 
     function addMessage(text, side) {
@@ -832,6 +694,7 @@
       div.textContent = text;
       box.appendChild(div);
       box.scrollTop = box.scrollHeight;
+      chatHistory.push({ role: side === 'user' ? 'user' : 'assistant', content: text });
     }
 
     function addTypingIndicator() {
@@ -853,29 +716,23 @@
       const input = document.getElementById('uIn');
       const button = input.nextElementSibling;
       const text = input.value.trim();
-
       if (!text) return;
 
       addMessage(text, 'user');
       input.value = '';
       input.disabled = true;
       button.disabled = true;
-
       addTypingIndicator();
 
       try {
         const response = await fetch('/api/restaurant', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: text })
+          body: JSON.stringify({ prompt: text, history: chatHistory.slice(0, -1) })
         });
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-
         removeTypingIndicator();
 
         if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
@@ -894,21 +751,14 @@
     }
 
     document.getElementById('uIn').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        send();
-      }
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
     });
 
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function (e) {
+      anchor.addEventListener('click', function(e) {
         e.preventDefault();
         const href = this.getAttribute('href');
-        if (href !== '#') {
-          document.querySelector(href).scrollIntoView({
-            behavior: 'smooth'
-          });
-        }
+        if (href !== '#') document.querySelector(href).scrollIntoView({ behavior: 'smooth' });
       });
     });
   </script>
