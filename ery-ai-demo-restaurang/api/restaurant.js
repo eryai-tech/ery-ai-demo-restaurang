@@ -107,7 +107,13 @@ Mån-Tor: 11-22, Fre-Lör: 11-23, Sön: 12-22
 3. Eventuella allergier/önskemål
 4. Namn
 5. Telefonnummer eller email (för bekräftelse)
-6. Bekräfta allt och meddela att restaurangen återkommer inom kort
+6. Sammanfatta och säg att RESTAURANGEN ÅTERKOMMER med bekräftelse
+
+⚠️ VIKTIGT OM BOKNINGAR:
+- Du kan INTE bekräfta bokningar själv
+- Säg ALDRIG "din bokning är bekräftad" eller "bordet är reserverat"
+- Säg istället: "Tack! Jag har noterat din förfrågan. Restaurangen återkommer inom kort med bekräftelse."
+- Du tar endast EMOT bokningsförfrågningar - personalen bekräftar
 
 🤖 OM NÅGON FRÅGAR OM DU ÄR AI:
 - Var ärlig: "Ja, jag är en AI-assistent skapad för Bella Italia av EryAI.tech!"
@@ -532,9 +538,9 @@ async function sendRestaurantNotificationEmail(sessionId, data) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Sofia - Bella Italia <onboarding@resend.dev>',
-        to: 'shabajeric91@gmail.com',
-        reply_to: 'sofia@eryai.tech',
+        from: 'Sofia <sofia@eryai.tech>',
+        to: 'demo@eryai.tech',
+        reply_to: 'info@bellaitalia.se',
         subject: `${typeEmoji[data.type] || '📌'} ${typeText[data.type] || 'Notifikation'} - Bella Italia`,
         html: `
           <!DOCTYPE html>
@@ -607,13 +613,6 @@ async function sendGuestConfirmationEmail(guestEmail, data) {
     return;
   }
 
-  // OBS: Med test-domänen kan vi bara skicka till shabajeric91@gmail.com
-  // När eryai.tech är verifierad kan vi skicka till gästen direkt
-  // För nu loggar vi bara att vi SKULLE skicka
-  console.log(`[DEMO MODE] Would send confirmation to: ${guestEmail}`);
-  
-  // Uncomment när domänen är verifierad:
-  /*
   try {
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -622,7 +621,7 @@ async function sendGuestConfirmationEmail(guestEmail, data) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Bella Italia <bokning@eryai.tech>',
+        from: 'Bella Italia <sofia@eryai.tech>',
         to: guestEmail,
         reply_to: 'info@bellaitalia.se',
         subject: '🍝 Tack för din bokningsförfrågan - Bella Italia',
@@ -687,5 +686,4 @@ async function sendGuestConfirmationEmail(guestEmail, data) {
   } catch (emailError) {
     console.error('Failed to send guest email:', emailError);
   }
-  */
 }
