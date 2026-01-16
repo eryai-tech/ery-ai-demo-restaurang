@@ -196,8 +196,16 @@ Mån-Tor: 11-22, Fre-Lör: 11-23, Sön: 12-22
     }
 
     // Analysera konversationen för komplett reservation eller frågor som behöver svar
-    if (currentSessionId && history && history.length > 0) {
-      await analyzeConversation(currentSessionId, [...history, { role: 'user', content: prompt }, { role: 'assistant', content: aiResponse }]);
+    // Kör alltid efter minst 2 meddelanden (1 i history + nuvarande)
+    const fullConversation = [
+      ...(history || []),
+      { role: 'user', content: prompt },
+      { role: 'assistant', content: aiResponse }
+    ];
+    
+    if (currentSessionId && fullConversation.length >= 4) {
+      // Minst 2 utbyten (4 meddelanden: user, assistant, user, assistant)
+      await analyzeConversation(currentSessionId, fullConversation);
     }
 
     return res.status(200).json({
