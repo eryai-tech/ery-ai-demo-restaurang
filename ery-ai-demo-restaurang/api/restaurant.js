@@ -113,33 +113,38 @@ Mån-Tor: 11-22, Fre-Lör: 11-23, Sön: 12-22
 - Var ärlig: "Ja, jag är en AI-assistent skapad för Bella Italia av EryAI.tech!"
 - Nämn ALDRIG Google, Gemini, OpenAI
 
-🚨 HANDOFF-DETECTION (VIKTIGT!):
-När något av detta händer, lägg till en speciell rad I SLUTET av ditt svar:
+🚨 HANDOFF-DETECTION (EXTREMT VIKTIGT - FÖLJ EXAKT!):
+När något av detta händer, lägg till en speciell rad I SLUTET av ditt svar. Formatet MÅSTE vara EXAKT som visas nedan - inga mellanslag eller extra tecken!
 
 1. KOMPLETT RESERVATION (alla uppgifter samlade: datum, tid, antal, namn, kontakt):
-   Avsluta med: |||HANDOFF:reservation|||GUESTNAME:namn|||GUESTCONTACT:email/tel|||SUMMARY:Reservation [datum] kl [tid], [antal] pers, [ev allergier]|||
+   Avsluta med EXAKT detta format på EN rad:
+   |||HANDOFF:reservation|||GUESTNAME:namn|||GUESTCONTACT:email/tel|||SUMMARY:Reservation [datum] kl [tid], [antal] pers, [ev allergier]|||
 
 2. ALLERGI/SPECIALKOST som behöver bekräftas av kök:
-   Avsluta med: |||HANDOFF:special_request|||SUMMARY:Allergi/specialkost: [detaljer]|||
+   |||HANDOFF:special_request|||SUMMARY:Allergi/specialkost: [detaljer]|||
 
 3. KLAGOMÅL eller missnöje:
-   Avsluta med: |||HANDOFF:complaint|||SUMMARY:[kort beskrivning av problemet]|||
+   |||HANDOFF:complaint|||SUMMARY:[kort beskrivning av problemet]|||
 
 4. GÄSTEN BER UTTRYCKLIGEN att prata med personal:
-   Avsluta med: |||HANDOFF:handoff|||SUMMARY:Gästen vill prata med personal om [anledning]|||
+   |||HANDOFF:handoff|||SUMMARY:Gästen vill prata med personal om [anledning]|||
 
 5. FRÅGA DU INTE KAN SVARA PÅ:
-   Avsluta med: |||HANDOFF:question|||SUMMARY:[frågan som behöver besvaras]|||
+   |||HANDOFF:question|||SUMMARY:[frågan som behöver besvaras]|||
 
-EXEMPEL på komplett reservation:
+KORREKT EXEMPEL på komplett reservation:
 "Perfetto! Jag har noterat din reservation:
 📅 Fredag 24 januari kl 19:00
 👥 4 personer
 🥜 Glutenfritt för en gäst
 📱 Anna, 070-123 4567
 
-Jag skickar detta till restaurangen så återkommer de med bekräftelse inom kort. Grazie mille! 🍝"
-|||HANDOFF:reservation|||GUESTNAME:Anna|||GUESTCONTACT:070-123 4567|||SUMMARY:Reservation fre 24/1 kl 19:00, 4 pers, 1 glutenfri|||
+Jag skickar detta till restaurangen så återkommer de med bekräftelse inom kort. Grazie mille! 🍝
+|||HANDOFF:reservation|||GUESTNAME:Anna|||GUESTCONTACT:070-123 4567|||SUMMARY:Reservation fre 24/1 kl 19:00, 4 pers, 1 glutenfri|||"
+
+FELAKTIGT (gör INTE så här):
+"Grazie mille! 🍝 GUESTNAME:Anna SUMMARY:..." ❌
+"|||HANDOFF:reservation GUESTNAME:Anna|||" ❌
 
 ❌ GÖR ALDRIG:
 - Fråga om något kunden REDAN sagt
@@ -319,7 +324,7 @@ async function handleHandoff(sessionId, handoffData) {
       };
 
       try {
-        await fetch('https://api.resend.com/emails', {
+        const emailResponse = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${RESEND_API_KEY}`,
@@ -379,7 +384,14 @@ async function handleHandoff(sessionId, handoffData) {
             `
           })
         });
-        console.log('Email sent successfully');
+        
+        const emailResult = await emailResponse.json();
+        
+        if (emailResponse.ok) {
+          console.log('Email sent successfully:', emailResult.id);
+        } else {
+          console.error('Resend API error:', emailResponse.status, emailResult);
+        }
       } catch (emailError) {
         console.error('Failed to send email:', emailError);
       }
