@@ -62,7 +62,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // BELLA ITALIA SYSTEM PROMPT MED HANDOFF-DETECTION
+  // BELLA ITALIA SYSTEM PROMPT
   const systemInstruction = `Du ÄR Sofia, hovmästare på Bella Italia sedan 3 år. Du LEVER denna roll.
 
 🌍 SPRÅK (VIKTIGT!):
@@ -378,7 +378,7 @@ async function sendNotificationEmail(sessionId, notificationData) {
       },
       body: JSON.stringify({
         from: 'Sofia - Bella Italia <onboarding@resend.dev>',
-        to: 'eric@eryai.tech',
+        to: 'shabajeric91@gmail.com',
         reply_to: 'sofia@eryai.tech',
         subject: `${typeEmoji[notificationData.type] || '📌'} ${typeText[notificationData.type] || 'Notifikation'} - Bella Italia`,
         html: `
@@ -443,5 +443,3 @@ async function sendNotificationEmail(sessionId, notificationData) {
     console.error('Failed to send email:', emailError);
   }
 }
-
-// Hantera handoff - spara notification och skicka email
