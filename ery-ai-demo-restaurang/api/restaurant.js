@@ -113,41 +113,11 @@ Mån-Tor: 11-22, Fre-Lör: 11-23, Sön: 12-22
 - Var ärlig: "Ja, jag är en AI-assistent skapad för Bella Italia av EryAI.tech!"
 - Nämn ALDRIG Google, Gemini, OpenAI
 
-🚨 HANDOFF DETECTION - TEKNISK INTEGRATION:
-När du har samlat ALL information nedan, lägg till denna EXAKTA kod-sträng EFTER ditt svar till gästen.
-
-KOD-MALL FÖR KOMPLETT RESERVATION:
-|||HANDOFF:reservation|||GUESTNAME:[namn]|||GUESTCONTACT:[email eller telefon]|||SUMMARY:Reservation [datum] kl [tid], [antal] pers|||
-
-EXEMPEL PÅ RÄTT ANVÄNDNING:
-Gäst ger: 4 personer, måndag kl 18:00, namn: Anna, email: anna@email.com
-
-Ditt svar:
-"Perfetto! Jag har noterat din reservation:
-📅 Måndag kl 18:00
-👥 4 personer
-📱 Anna, anna@email.com
-
-Jag skickar detta till restaurangen så återkommer de med bekräftelse inom kort. Grazie mille! 🍝
-|||HANDOFF:reservation|||GUESTNAME:Anna|||GUESTCONTACT:anna@email.com|||SUMMARY:Reservation mån kl 18:00, 4 pers|||"
-
-VIKTIGT:
-- Kod-strängen måste vara PÅ EN EGEN RAD efter ditt svar
-- Glöm INTE ||| före HANDOFF och mellan varje fält
-- Glöm INTE ||| i slutet
-- Exakt format: |||HANDOFF:reservation|||GUESTNAME:X|||GUESTCONTACT:Y|||SUMMARY:Z|||
-
-ANDRA HANDOFF-TYPER (sällan):
-|||HANDOFF:complaint|||SUMMARY:Klagomål - [beskrivning]|||
-|||HANDOFF:question|||SUMMARY:Fråga - [vad gästen frågade]|||
-|||HANDOFF:special_request|||SUMMARY:Allergi/special - [detaljer]|||
-
 ❌ GÖR ALDRIG:
 - Fråga om något kunden REDAN sagt
 - Upprepa samma fråga
 - Vara fräck eller irriterad
-- Hitta på priser eller rätter
-- Glömma att lägga till HANDOFF-taggen när det behövs`;
+- Hitta på priser eller rätter`;
 
   // Bygg konversationshistorik för Gemini
   let contents = [];
@@ -202,38 +172,14 @@ ANDRA HANDOFF-TYPER (sällan):
 
     const data = await response.json();
     let aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    
-    // HANDOFF DETECTION - Parse och hantera
-    let handoffData = null;
-    let cleanResponse = aiResponse;
-    
-    if (aiResponse.includes('|||HANDOFF:')) {
-      // Extrahera handoff-data
-      const handoffMatch = aiResponse.match(/\|\|\|HANDOFF:(\w+)\|\|\|/);
-      const guestNameMatch = aiResponse.match(/\|\|\|GUESTNAME:([^|]+)\|\|\|/);
-      const guestContactMatch = aiResponse.match(/\|\|\|GUESTCONTACT:([^|]+)\|\|\|/);
-      const summaryMatch = aiResponse.match(/\|\|\|SUMMARY:([^|]+)\|\|\|/);
-      
-      if (handoffMatch) {
-        handoffData = {
-          type: handoffMatch[1],
-          guestName: guestNameMatch ? guestNameMatch[1].trim() : null,
-          guestContact: guestContactMatch ? guestContactMatch[1].trim() : null,
-          summary: summaryMatch ? summaryMatch[1].trim() : 'Behöver uppföljning'
-        };
-        
-        // Ta bort handoff-taggarna från svaret till gästen
-        cleanResponse = aiResponse.replace(/\|\|\|[^|]+\|\|\|/g, '').trim();
-      }
-    }
 
-    // Spara AI-svaret i Supabase (utan handoff-taggar)
-    if (currentSessionId && cleanResponse) {
+    // Spara AI-svaret i Supabase
+    if (currentSessionId && aiResponse) {
       try {
         await supabase.from('chat_messages').insert({
           session_id: currentSessionId,
           role: 'assistant',
-          content: cleanResponse,
+          content: aiResponse,
           sender_type: 'ai'
         });
         
@@ -241,8 +187,7 @@ ANDRA HANDOFF-TYPER (sällan):
         await supabase
           .from('chat_sessions')
           .update({ 
-            updated_at: new Date().toISOString(),
-            needs_human: handoffData ? true : false
+            updated_at: new Date().toISOString()
           })
           .eq('id', currentSessionId);
       } catch (err) {
@@ -250,151 +195,253 @@ ANDRA HANDOFF-TYPER (sällan):
       }
     }
 
-    // Om handoff behövs - skapa notification och skicka email
-    if (handoffData && currentSessionId) {
-      await handleHandoff(currentSessionId, handoffData);
+    // Analysera konversationen för komplett reservation
+    if (currentSessionId && history && history.length > 0) {
+      await analyzeForCompleteReservation(currentSessionId, [...history, { role: 'assistant', content: aiResponse }]);
     }
 
-    // Skicka tillbaka RENT svar till gästen (utan handoff-taggar)
-    const cleanData = {
+    return res.status(200).json({
       ...data,
       sessionId: currentSessionId
-    };
-    
-    // Ersätt AI-svaret med det rena svaret
-    if (cleanData.candidates?.[0]?.content?.parts?.[0]) {
-      cleanData.candidates[0].content.parts[0].text = cleanResponse;
-    }
-
-    return res.status(200).json(cleanData);
+    });
   } catch (error) {
     console.error('Server error:', error);
     return res.status(500).json({ error: 'Kunde inte kontakta servern' });
   }
 }
 
-// Hantera handoff - spara notification och skicka email
-async function handleHandoff(sessionId, handoffData) {
+// Analysera konversation för komplett reservation
+async function analyzeForCompleteReservation(sessionId, conversationHistory) {
   try {
-    // 1. Spara notification i Supabase
-    const priority = handoffData.type === 'complaint' ? 'high' : 
-                     handoffData.type === 'reservation' ? 'normal' : 'normal';
-    
-    const { data: notification, error: notifError } = await supabase
-      .from('notifications')
-      .insert({
-        customer_id: BELLA_ITALIA_ID,
-        session_id: sessionId,
-        type: handoffData.type,
-        priority: priority,
-        status: 'unread',
-        summary: handoffData.summary,
-        guest_name: handoffData.guestName,
-        guest_email: handoffData.guestContact?.includes('@') ? handoffData.guestContact : null,
-        guest_phone: handoffData.guestContact && !handoffData.guestContact.includes('@') ? handoffData.guestContact : null
-      })
-      .select()
-      .single();
+    const API_KEY = process.env.GEMINI_API_KEY;
+    if (!API_KEY) return;
 
-    if (notifError) {
-      console.error('Failed to create notification:', notifError);
+    // Bygg konversationstext
+    const conversationText = conversationHistory
+      .map(msg => `${msg.role === 'user' ? 'Gäst' : 'Sofia'}: ${msg.content}`)
+      .join('\n');
+
+    // Analysera med Gemini
+    const analysisPrompt = `Analysera denna restaurangkonversation och avgör om ALLA uppgifter för en komplett reservation finns:
+
+${conversationText}
+
+En KOMPLETT reservation måste innehålla ALLA dessa:
+1. Datum (specifikt datum eller veckodag)
+2. Tid (klockan X)
+3. Antal personer
+4. Gästens namn
+5. Kontaktuppgift (email ELLER telefonnummer)
+
+Svara ENDAST med JSON i detta format (ingen annan text):
+{
+  "complete": true/false,
+  "guest_name": "namn eller null",
+  "guest_contact": "email/tel eller null",
+  "date": "datum/veckodag eller null",
+  "time": "tid eller null",
+  "party_size": antal eller null,
+  "special_requests": "allergier/önskemål eller null"
+}`;
+
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=' + API_KEY,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: analysisPrompt }] }],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 500
+          }
+        })
+      }
+    );
+
+    if (!response.ok) {
+      console.error('Analysis API error:', response.status);
+      return;
     }
 
-    // 2. Skicka email via Resend
-    const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    if (RESEND_API_KEY) {
-      const typeEmoji = {
-        reservation: '📅',
-        complaint: '⚠️',
-        question: '❓',
-        special_request: '🥗',
-        handoff: '👋'
-      };
-      
-      const typeText = {
-        reservation: 'Ny reservation',
-        complaint: 'Klagomål - behöver uppmärksamhet',
-        question: 'Fråga som behöver svar',
-        special_request: 'Specialönskemål',
-        handoff: 'Gäst vill prata med personal'
-      };
+    const analysisData = await response.json();
+    const analysisText = analysisData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    // Parse JSON från svaret
+    const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.log('No JSON found in analysis');
+      return;
+    }
 
-      try {
-        const emailResponse = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${RESEND_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            from: 'Sofia <sofia@eryai.tech>',
-            to: 'eric@eryai.tech', // TODO: Hämta från customer.settings.notification_email
-            subject: `${typeEmoji[handoffData.type] || '📌'} ${typeText[handoffData.type] || 'Notifikation'} - Bella Italia`,
-            html: `
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <style>
-                  body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #1c1c1c; }
-                  .container { max-width: 500px; margin: 0 auto; padding: 20px; }
-                  .header { background: #2d3e2f; color: #d4a574; padding: 20px; border-radius: 12px 12px 0 0; }
-                  .header h1 { margin: 0; font-size: 24px; }
-                  .content { background: #faf8f5; padding: 24px; border: 1px solid #e0d5c7; }
-                  .detail { margin: 12px 0; }
-                  .label { font-weight: 600; color: #2d3e2f; }
-                  .cta { display: inline-block; background: #d4a574; color: #1c1c1c; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 16px; }
-                  .footer { background: #1c1c1c; color: #888; padding: 16px; text-align: center; font-size: 12px; border-radius: 0 0 12px 12px; }
-                </style>
-              </head>
-              <body>
-                <div class="container">
-                  <div class="header">
-                    <h1>${typeEmoji[handoffData.type] || '📌'} Sofia behöver din hjälp!</h1>
-                  </div>
-                  <div class="content">
-                    <div class="detail">
-                      <span class="label">Typ:</span> ${typeText[handoffData.type] || handoffData.type}
-                    </div>
-                    ${handoffData.guestName ? `
-                    <div class="detail">
-                      <span class="label">Gäst:</span> ${handoffData.guestName}
-                    </div>` : ''}
-                    ${handoffData.guestContact ? `
-                    <div class="detail">
-                      <span class="label">Kontakt:</span> ${handoffData.guestContact}
-                    </div>` : ''}
-                    <div class="detail">
-                      <span class="label">Sammanfattning:</span><br>
-                      ${handoffData.summary}
-                    </div>
-                    <a href="https://dashboard.eryai.tech/chat/${sessionId}" class="cta">
-                      Öppna konversationen →
-                    </a>
-                  </div>
-                  <div class="footer">
-                    Skickat av Sofia AI · Bella Italia · Powered by EryAI.tech
-                  </div>
-                </div>
-              </body>
-              </html>
-            `
-          })
-        });
-        
-        const emailResult = await emailResponse.json();
-        
-        if (emailResponse.ok) {
-          console.log('Email sent successfully:', emailResult.id);
-        } else {
-          console.error('Resend API error:', emailResponse.status, emailResult);
-        }
-      } catch (emailError) {
-        console.error('Failed to send email:', emailError);
+    const analysis = JSON.parse(jsonMatch[0]);
+    
+    console.log('Reservation analysis:', analysis);
+
+    // Om komplett reservation → skapa notification
+    if (analysis.complete && analysis.guest_name && analysis.guest_contact) {
+      
+      // Kolla om notification redan finns för denna session
+      const { data: existingNotif } = await supabase
+        .from('notifications')
+        .select('id')
+        .eq('session_id', sessionId)
+        .eq('type', 'reservation')
+        .single();
+
+      if (existingNotif) {
+        console.log('Notification already exists for this session');
+        return;
       }
-    } else {
-      console.log('RESEND_API_KEY not set, skipping email');
+
+      // Skapa notification
+      const summary = `Reservation ${analysis.date} kl ${analysis.time}, ${analysis.party_size} pers${analysis.special_requests ? ', ' + analysis.special_requests : ''}`;
+      
+      const { data: notification, error: notifError } = await supabase
+        .from('notifications')
+        .insert({
+          customer_id: BELLA_ITALIA_ID,
+          session_id: sessionId,
+          type: 'reservation',
+          priority: 'normal',
+          status: 'unread',
+          summary: summary,
+          guest_name: analysis.guest_name,
+          guest_email: analysis.guest_contact.includes('@') ? analysis.guest_contact : null,
+          guest_phone: !analysis.guest_contact.includes('@') ? analysis.guest_contact : null,
+          reservation_details: {
+            date: analysis.date,
+            time: analysis.time,
+            party_size: analysis.party_size,
+            special_requests: analysis.special_requests
+          }
+        })
+        .select()
+        .single();
+
+      if (notifError) {
+        console.error('Failed to create notification:', notifError);
+        return;
+      }
+
+      // Uppdatera session
+      await supabase
+        .from('chat_sessions')
+        .update({ needs_human: true })
+        .eq('id', sessionId);
+
+      console.log('Notification created:', notification.id);
+
+      // Skicka email
+      await sendNotificationEmail(sessionId, {
+        type: 'reservation',
+        guestName: analysis.guest_name,
+        guestContact: analysis.guest_contact,
+        summary: summary
+      });
     }
   } catch (err) {
-    console.error('Handoff error:', err);
+    console.error('Reservation analysis error:', err);
   }
 }
+
+// Skicka notification email
+async function sendNotificationEmail(sessionId, notificationData) {
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  if (!RESEND_API_KEY) {
+    console.log('RESEND_API_KEY not set, skipping email');
+    return;
+  }
+
+  const typeEmoji = {
+    reservation: '📅',
+    complaint: '⚠️',
+    question: '❓',
+    special_request: '🥗',
+    handoff: '👋'
+  };
+  
+  const typeText = {
+    reservation: 'Ny reservation',
+    complaint: 'Klagomål - behöver uppmärksamhet',
+    question: 'Fråga som behöver svar',
+    special_request: 'Specialönskemål',
+    handoff: 'Gäst vill prata med personal'
+  };
+
+  try {
+    const emailResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'Sofia - Bella Italia <onboarding@resend.dev>',
+        to: 'eric@eryai.tech',
+        reply_to: 'sofia@eryai.tech',
+        subject: `${typeEmoji[notificationData.type] || '📌'} ${typeText[notificationData.type] || 'Notifikation'} - Bella Italia`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #1c1c1c; }
+              .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+              .header { background: #2d3e2f; color: #d4a574; padding: 20px; border-radius: 12px 12px 0 0; }
+              .header h1 { margin: 0; font-size: 24px; }
+              .content { background: #faf8f5; padding: 24px; border: 1px solid #e0d5c7; }
+              .detail { margin: 12px 0; }
+              .label { font-weight: 600; color: #2d3e2f; }
+              .cta { display: inline-block; background: #d4a574; color: #1c1c1c; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 16px; }
+              .footer { background: #1c1c1c; color: #888; padding: 16px; text-align: center; font-size: 12px; border-radius: 0 0 12px 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>${typeEmoji[notificationData.type] || '📌'} Sofia behöver din hjälp!</h1>
+              </div>
+              <div class="content">
+                <div class="detail">
+                  <span class="label">Typ:</span> ${typeText[notificationData.type] || notificationData.type}
+                </div>
+                ${notificationData.guestName ? `
+                <div class="detail">
+                  <span class="label">Gäst:</span> ${notificationData.guestName}
+                </div>` : ''}
+                ${notificationData.guestContact ? `
+                <div class="detail">
+                  <span class="label">Kontakt:</span> ${notificationData.guestContact}
+                </div>` : ''}
+                <div class="detail">
+                  <span class="label">Sammanfattning:</span><br>
+                  ${notificationData.summary}
+                </div>
+                <a href="https://dashboard.eryai.tech/chat/${sessionId}" class="cta">
+                  Öppna konversationen →
+                </a>
+              </div>
+              <div class="footer">
+                Skickat av Sofia AI · Bella Italia · Powered by EryAI.tech
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      })
+    });
+    
+    const emailResult = await emailResponse.json();
+    
+    if (emailResponse.ok) {
+      console.log('Email sent successfully:', emailResult.id);
+    } else {
+      console.error('Resend API error:', emailResponse.status, emailResult);
+    }
+  } catch (emailError) {
+    console.error('Failed to send email:', emailError);
+  }
+}
+
+// Hantera handoff - spara notification och skicka email
