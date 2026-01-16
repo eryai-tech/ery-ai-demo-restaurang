@@ -107,7 +107,7 @@ Mån-Tor: 11-22, Fre-Lör: 11-23, Sön: 12-22
 3. Eventuella allergier/önskemål
 4. Namn
 5. Telefonnummer eller email (för bekräftelse)
-6. Bekräfta allt och meddela att restaurangen återkommer
+6. Bekräfta allt och meddela att restaurangen återkommer inom kort
 
 🤖 OM NÅGON FRÅGAR OM DU ÄR AI:
 - Var ärlig: "Ja, jag är en AI-assistent skapad för Bella Italia av EryAI.tech!"
@@ -195,9 +195,9 @@ Mån-Tor: 11-22, Fre-Lör: 11-23, Sön: 12-22
       }
     }
 
-    // Analysera konversationen för komplett reservation
+    // Analysera konversationen för komplett reservation eller frågor som behöver svar
     if (currentSessionId && history && history.length > 0) {
-      await analyzeForCompleteReservation(currentSessionId, [...history, { role: 'assistant', content: aiResponse }]);
+      await analyzeConversation(currentSessionId, [...history, { role: 'user', content: prompt }, { role: 'assistant', content: aiResponse }]);
     }
 
     return res.status(200).json({
@@ -210,8 +210,8 @@ Mån-Tor: 11-22, Fre-Lör: 11-23, Sön: 12-22
   }
 }
 
-// Analysera konversation för komplett reservation
-async function analyzeForCompleteReservation(sessionId, conversationHistory) {
+// Analysera konversation för reservationer och frågor som behöver mänskligt svar
+async function analyzeConversation(sessionId, conversationHistory) {
   try {
     const API_KEY = process.env.GEMINI_API_KEY;
     if (!API_KEY) return;
@@ -222,24 +222,27 @@ async function analyzeForCompleteReservation(sessionId, conversationHistory) {
       .join('\n');
 
     // Analysera med Gemini
-    const analysisPrompt = `Analysera denna restaurangkonversation och avgör om ALLA uppgifter för en komplett reservation finns:
+    const analysisPrompt = `Analysera denna restaurangkonversation noggrant:
 
 ${conversationText}
 
-En KOMPLETT reservation måste innehålla ALLA dessa:
-1. Datum (specifikt datum eller veckodag)
-2. Tid (klockan X)
-3. Antal personer
-4. Gästens namn
-5. Kontaktuppgift (email ELLER telefonnummer)
+Avgör:
+1. Om det finns en KOMPLETT reservation (datum + tid + antal + namn + kontakt)
+2. Om gästen ställt en fråga som Sofia INTE kunde svara på (t.ex. specifika allergifrågor, specialbokningar, privata event, prisfrågor utanför menyn)
+3. Om gästen uttryckt missnöje eller klagomål
+4. Om gästen explicit bett att prata med personal/chef
 
-Svara ENDAST med JSON i detta format (ingen annan text):
+Svara ENDAST med JSON (ingen annan text):
 {
-  "complete": true/false,
+  "reservation_complete": true/false,
+  "needs_human_response": true/false,
+  "needs_human_reason": "anledning eller null",
+  "is_complaint": true/false,
   "guest_name": "namn eller null",
-  "guest_contact": "email/tel eller null",
-  "date": "datum/veckodag eller null",
-  "time": "tid eller null",
+  "guest_email": "email eller null",
+  "guest_phone": "telefon eller null",
+  "reservation_date": "datum/veckodag eller null",
+  "reservation_time": "tid eller null",
   "party_size": antal eller null,
   "special_requests": "allergier/önskemål eller null"
 }`;
@@ -275,78 +278,202 @@ Svara ENDAST med JSON i detta format (ingen annan text):
     }
 
     const analysis = JSON.parse(jsonMatch[0]);
-    
-    console.log('Reservation analysis:', analysis);
+    console.log('Conversation analysis:', analysis);
 
-    // Om komplett reservation → skapa notification
-    if (analysis.complete && analysis.guest_name && analysis.guest_contact) {
-      
-      // Kolla om notification redan finns för denna session
-      const { data: existingNotif } = await supabase
-        .from('notifications')
-        .select('id')
-        .eq('session_id', sessionId)
-        .eq('type', 'reservation')
-        .single();
-
-      if (existingNotif) {
-        console.log('Notification already exists for this session');
-        return;
-      }
-
-      // Skapa notification
-      const summary = `Reservation ${analysis.date} kl ${analysis.time}, ${analysis.party_size} pers${analysis.special_requests ? ', ' + analysis.special_requests : ''}`;
-      
-      const { data: notification, error: notifError } = await supabase
-        .from('notifications')
-        .insert({
-          customer_id: BELLA_ITALIA_ID,
-          session_id: sessionId,
-          type: 'reservation',
-          priority: 'normal',
-          status: 'unread',
-          summary: summary,
-          guest_name: analysis.guest_name,
-          guest_email: analysis.guest_contact.includes('@') ? analysis.guest_contact : null,
-          guest_phone: !analysis.guest_contact.includes('@') ? analysis.guest_contact : null,
-          reservation_details: {
-            date: analysis.date,
-            time: analysis.time,
-            party_size: analysis.party_size,
-            special_requests: analysis.special_requests
-          }
-        })
-        .select()
-        .single();
-
-      if (notifError) {
-        console.error('Failed to create notification:', notifError);
-        return;
-      }
-
-      // Uppdatera session
-      await supabase
-        .from('chat_sessions')
-        .update({ needs_human: true })
-        .eq('id', sessionId);
-
-      console.log('Notification created:', notification.id);
-
-      // Skicka email
-      await sendNotificationEmail(sessionId, {
-        type: 'reservation',
-        guestName: analysis.guest_name,
-        guestContact: analysis.guest_contact,
-        summary: summary
-      });
+    // Uppdatera session med gästinfo om vi har det
+    if (analysis.guest_name || analysis.guest_email || analysis.guest_phone) {
+      await updateSessionWithGuestInfo(sessionId, analysis);
     }
+
+    // Hantera komplett reservation
+    if (analysis.reservation_complete && analysis.guest_name && (analysis.guest_email || analysis.guest_phone)) {
+      await handleCompleteReservation(sessionId, analysis);
+    }
+    // Hantera frågor som behöver mänskligt svar
+    else if (analysis.needs_human_response || analysis.is_complaint) {
+      await handleNeedsHumanResponse(sessionId, analysis);
+    }
+
   } catch (err) {
-    console.error('Reservation analysis error:', err);
+    console.error('Conversation analysis error:', err);
   }
 }
 
-// Skicka notification email
-async function sendNotificationEmail(sessionId, notificationData) {
+// Uppdatera session med gästinfo så det syns i dashboarden
+async function updateSessionWithGuestInfo(sessionId, analysis) {
+  try {
+    const updateData = {
+      updated_at: new Date().toISOString(),
+      metadata: {
+        guest_name: analysis.guest_name,
+        guest_email: analysis.guest_email,
+        guest_phone: analysis.guest_phone,
+        source: 'web-widget'
+      }
+    };
+
+    await supabase
+      .from('chat_sessions')
+      .update(updateData)
+      .eq('id', sessionId);
+
+    console.log('Session updated with guest info:', analysis.guest_name);
+  } catch (err) {
+    console.error('Failed to update session with guest info:', err);
+  }
+}
+
+// Hantera komplett reservation
+async function handleCompleteReservation(sessionId, analysis) {
+  try {
+    // Kolla om notification redan finns för denna session
+    const { data: existingNotif } = await supabase
+      .from('notifications')
+      .select('id')
+      .eq('session_id', sessionId)
+      .eq('type', 'reservation')
+      .single();
+
+    if (existingNotif) {
+      console.log('Reservation notification already exists for this session');
+      return;
+    }
+
+    const guestContact = analysis.guest_email || analysis.guest_phone;
+    const summary = `Reservation ${analysis.reservation_date} kl ${analysis.reservation_time}, ${analysis.party_size} pers${analysis.special_requests ? ', ' + analysis.special_requests : ''}`;
+    
+    // Skapa notification i databasen
+    const { data: notification, error: notifError } = await supabase
+      .from('notifications')
+      .insert({
+        customer_id: BELLA_ITALIA_ID,
+        session_id: sessionId,
+        type: 'reservation',
+        priority: 'high',
+        status: 'unread',
+        summary: summary,
+        guest_name: analysis.guest_name,
+        guest_email: analysis.guest_email,
+        guest_phone: analysis.guest_phone,
+        reservation_details: {
+          date: analysis.reservation_date,
+          time: analysis.reservation_time,
+          party_size: analysis.party_size,
+          special_requests: analysis.special_requests
+        }
+      })
+      .select()
+      .single();
+
+    if (notifError) {
+      console.error('Failed to create notification:', notifError);
+      return;
+    }
+
+    // Markera session som needs_human
+    await supabase
+      .from('chat_sessions')
+      .update({ needs_human: true })
+      .eq('id', sessionId);
+
+    console.log('Reservation notification created:', notification.id);
+
+    // Skicka email till restaurangen
+    await sendRestaurantNotificationEmail(sessionId, {
+      type: 'reservation',
+      guestName: analysis.guest_name,
+      guestContact: guestContact,
+      summary: summary,
+      details: {
+        date: analysis.reservation_date,
+        time: analysis.reservation_time,
+        partySize: analysis.party_size,
+        specialRequests: analysis.special_requests
+      }
+    });
+
+    // Skicka bekräftelsemail till gästen (om vi har email)
+    if (analysis.guest_email) {
+      await sendGuestConfirmationEmail(analysis.guest_email, {
+        guestName: analysis.guest_name,
+        date: analysis.reservation_date,
+        time: analysis.reservation_time,
+        partySize: analysis.party_size,
+        specialRequests: analysis.special_requests
+      });
+    }
+
+  } catch (err) {
+    console.error('Error handling complete reservation:', err);
+  }
+}
+
+// Hantera frågor som behöver mänskligt svar
+async function handleNeedsHumanResponse(sessionId, analysis) {
+  try {
+    // Kolla om vi redan har en "needs_response" notification för denna session
+    const { data: existingNotif } = await supabase
+      .from('notifications')
+      .select('id')
+      .eq('session_id', sessionId)
+      .in('type', ['question', 'complaint', 'handoff'])
+      .single();
+
+    if (existingNotif) {
+      console.log('Human response notification already exists');
+      return;
+    }
+
+    const notificationType = analysis.is_complaint ? 'complaint' : 'question';
+    const priority = analysis.is_complaint ? 'urgent' : 'normal';
+    const summary = analysis.needs_human_reason || (analysis.is_complaint ? 'Gäst har uttryckt missnöje' : 'Gäst har frågor som behöver svar');
+
+    // Skapa notification
+    const { data: notification, error: notifError } = await supabase
+      .from('notifications')
+      .insert({
+        customer_id: BELLA_ITALIA_ID,
+        session_id: sessionId,
+        type: notificationType,
+        priority: priority,
+        status: 'unread',
+        summary: summary,
+        guest_name: analysis.guest_name,
+        guest_email: analysis.guest_email,
+        guest_phone: analysis.guest_phone
+      })
+      .select()
+      .single();
+
+    if (notifError) {
+      console.error('Failed to create notification:', notifError);
+      return;
+    }
+
+    // Markera session
+    await supabase
+      .from('chat_sessions')
+      .update({ needs_human: true })
+      .eq('id', sessionId);
+
+    console.log('Human response notification created:', notification.id);
+
+    // Skicka email till restaurangen
+    const guestContact = analysis.guest_email || analysis.guest_phone || 'Ej angiven';
+    await sendRestaurantNotificationEmail(sessionId, {
+      type: notificationType,
+      guestName: analysis.guest_name || 'Okänd gäst',
+      guestContact: guestContact,
+      summary: summary
+    });
+
+  } catch (err) {
+    console.error('Error handling needs human response:', err);
+  }
+}
+
+// Skicka notification email till restaurangen
+async function sendRestaurantNotificationEmail(sessionId, data) {
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   if (!RESEND_API_KEY) {
     console.log('RESEND_API_KEY not set, skipping email');
@@ -355,19 +482,39 @@ async function sendNotificationEmail(sessionId, notificationData) {
 
   const typeEmoji = {
     reservation: '📅',
-    complaint: '⚠️',
+    complaint: '🚨',
     question: '❓',
     special_request: '🥗',
     handoff: '👋'
   };
   
   const typeText = {
-    reservation: 'Ny reservation',
-    complaint: 'Klagomål - behöver uppmärksamhet',
-    question: 'Fråga som behöver svar',
+    reservation: 'Ny bokningsförfrågan - VÄNTAR PÅ BEKRÄFTELSE',
+    complaint: 'Klagomål - KRÄVER OMEDELBAR ÅTGÄRD',
+    question: 'Fråga från gäst - VÄNTAR PÅ SVAR',
     special_request: 'Specialönskemål',
     handoff: 'Gäst vill prata med personal'
   };
+
+  const urgencyBanner = data.type === 'complaint' 
+    ? '<div style="background: #dc2626; color: white; padding: 12px; text-align: center; font-weight: bold;">⚠️ KRÄVER OMEDELBAR UPPMÄRKSAMHET</div>'
+    : data.type === 'reservation'
+    ? '<div style="background: #f59e0b; color: white; padding: 12px; text-align: center; font-weight: bold;">📞 Vänligen bekräfta inom 2 timmar</div>'
+    : '';
+
+  // Bygg detaljer för reservation
+  let detailsHtml = '';
+  if (data.type === 'reservation' && data.details) {
+    detailsHtml = `
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 16px 0;">
+        <h3 style="margin: 0 0 12px 0; color: #166534;">📋 Bokningsdetaljer</h3>
+        <p style="margin: 4px 0;"><strong>Datum:</strong> ${data.details.date}</p>
+        <p style="margin: 4px 0;"><strong>Tid:</strong> ${data.details.time}</p>
+        <p style="margin: 4px 0;"><strong>Antal gäster:</strong> ${data.details.partySize}</p>
+        ${data.details.specialRequests ? `<p style="margin: 4px 0;"><strong>Önskemål:</strong> ${data.details.specialRequests}</p>` : ''}
+      </div>
+    `;
+  }
 
   try {
     const emailResponse = await fetch('https://api.resend.com/emails', {
@@ -380,43 +527,43 @@ async function sendNotificationEmail(sessionId, notificationData) {
         from: 'Sofia - Bella Italia <onboarding@resend.dev>',
         to: 'shabajeric91@gmail.com',
         reply_to: 'sofia@eryai.tech',
-        subject: `${typeEmoji[notificationData.type] || '📌'} ${typeText[notificationData.type] || 'Notifikation'} - Bella Italia`,
+        subject: `${typeEmoji[data.type] || '📌'} ${typeText[data.type] || 'Notifikation'} - Bella Italia`,
         html: `
           <!DOCTYPE html>
           <html>
           <head>
             <style>
-              body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #1c1c1c; }
-              .container { max-width: 500px; margin: 0 auto; padding: 20px; }
-              .header { background: #2d3e2f; color: #d4a574; padding: 20px; border-radius: 12px 12px 0 0; }
-              .header h1 { margin: 0; font-size: 24px; }
+              body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #1c1c1c; margin: 0; padding: 0; }
+              .container { max-width: 500px; margin: 0 auto; }
+              .header { background: #2d3e2f; color: #d4a574; padding: 20px; }
+              .header h1 { margin: 0; font-size: 22px; }
               .content { background: #faf8f5; padding: 24px; border: 1px solid #e0d5c7; }
               .detail { margin: 12px 0; }
               .label { font-weight: 600; color: #2d3e2f; }
               .cta { display: inline-block; background: #d4a574; color: #1c1c1c; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 16px; }
-              .footer { background: #1c1c1c; color: #888; padding: 16px; text-align: center; font-size: 12px; border-radius: 0 0 12px 12px; }
+              .footer { background: #1c1c1c; color: #888; padding: 16px; text-align: center; font-size: 12px; }
             </style>
           </head>
           <body>
             <div class="container">
               <div class="header">
-                <h1>${typeEmoji[notificationData.type] || '📌'} Sofia behöver din hjälp!</h1>
+                <h1>${typeEmoji[data.type] || '📌'} Sofia behöver din hjälp!</h1>
               </div>
+              ${urgencyBanner}
               <div class="content">
                 <div class="detail">
-                  <span class="label">Typ:</span> ${typeText[notificationData.type] || notificationData.type}
+                  <span class="label">Typ:</span> ${typeText[data.type] || data.type}
                 </div>
-                ${notificationData.guestName ? `
                 <div class="detail">
-                  <span class="label">Gäst:</span> ${notificationData.guestName}
-                </div>` : ''}
-                ${notificationData.guestContact ? `
+                  <span class="label">Gäst:</span> ${data.guestName || 'Ej angiven'}
+                </div>
                 <div class="detail">
-                  <span class="label">Kontakt:</span> ${notificationData.guestContact}
-                </div>` : ''}
+                  <span class="label">Kontakt:</span> ${data.guestContact || 'Ej angiven'}
+                </div>
+                ${detailsHtml}
                 <div class="detail">
                   <span class="label">Sammanfattning:</span><br>
-                  ${notificationData.summary}
+                  ${data.summary}
                 </div>
                 <a href="https://dashboard.eryai.tech/chat/${sessionId}" class="cta">
                   Öppna konversationen →
@@ -435,11 +582,102 @@ async function sendNotificationEmail(sessionId, notificationData) {
     const emailResult = await emailResponse.json();
     
     if (emailResponse.ok) {
-      console.log('Email sent successfully:', emailResult.id);
+      console.log('Restaurant notification email sent:', emailResult.id);
     } else {
       console.error('Resend API error:', emailResponse.status, emailResult);
     }
   } catch (emailError) {
-    console.error('Failed to send email:', emailError);
+    console.error('Failed to send restaurant email:', emailError);
   }
+}
+
+// Skicka bekräftelsemail till gästen
+async function sendGuestConfirmationEmail(guestEmail, data) {
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  if (!RESEND_API_KEY) {
+    console.log('RESEND_API_KEY not set, skipping guest email');
+    return;
+  }
+
+  // OBS: Med test-domänen kan vi bara skicka till shabajeric91@gmail.com
+  // När eryai.tech är verifierad kan vi skicka till gästen direkt
+  // För nu loggar vi bara att vi SKULLE skicka
+  console.log(`[DEMO MODE] Would send confirmation to: ${guestEmail}`);
+  
+  // Uncomment när domänen är verifierad:
+  /*
+  try {
+    const emailResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'Bella Italia <bokning@eryai.tech>',
+        to: guestEmail,
+        reply_to: 'info@bellaitalia.se',
+        subject: '🍝 Tack för din bokningsförfrågan - Bella Italia',
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: 'Georgia', serif; line-height: 1.8; color: #2d3e2f; margin: 0; padding: 0; background: #faf8f5; }
+              .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+              .header { text-align: center; padding: 30px 20px; }
+              .header h1 { color: #2d3e2f; margin: 0; font-size: 28px; }
+              .header p { color: #d4a574; margin: 8px 0 0 0; font-style: italic; }
+              .content { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+              .booking-details { background: #f0fdf4; border-left: 4px solid #2d3e2f; padding: 20px; margin: 20px 0; }
+              .booking-details h3 { margin: 0 0 12px 0; color: #2d3e2f; }
+              .booking-details p { margin: 6px 0; }
+              .message { font-size: 16px; }
+              .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🍝 Bella Italia</h1>
+                <p>Autentisk italiensk mat sedan 1985</p>
+              </div>
+              <div class="content">
+                <p class="message">Ciao ${data.guestName}!</p>
+                <p class="message">Tack för din bokningsförfrågan! Vi har tagit emot den och återkommer med bekräftelse inom kort.</p>
+                
+                <div class="booking-details">
+                  <h3>📋 Din förfrågan</h3>
+                  <p><strong>Datum:</strong> ${data.date}</p>
+                  <p><strong>Tid:</strong> ${data.time}</p>
+                  <p><strong>Antal gäster:</strong> ${data.partySize}</p>
+                  ${data.specialRequests ? `<p><strong>Önskemål:</strong> ${data.specialRequests}</p>` : ''}
+                </div>
+
+                <p class="message">Vi kontaktar dig så snart vi bekräftat din bokning. Har du frågor under tiden är du välkommen att ringa oss på <strong>08-555 1234</strong>.</p>
+                
+                <p class="message">Varma hälsningar,<br><em>Teamet på Bella Italia</em></p>
+              </div>
+              <div class="footer">
+                Bella Italia · Strandvägen 42, Stockholm · 08-555 1234<br>
+                <small>Detta mail skickades automatiskt via EryAI.tech</small>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      })
+    });
+    
+    const emailResult = await emailResponse.json();
+    
+    if (emailResponse.ok) {
+      console.log('Guest confirmation email sent:', emailResult.id);
+    } else {
+      console.error('Guest email error:', emailResponse.status, emailResult);
+    }
+  } catch (emailError) {
+    console.error('Failed to send guest email:', emailError);
+  }
+  */
 }
