@@ -48,6 +48,34 @@ export default async function handler(req, res) {
     }
   }
 
+  // KOLLA OM PERSONAL HAR TAGIT ÖVER KONVERSATIONEN
+  // Om det finns ett human-svar nyligen, ska Sofia INTE svara automatiskt
+  let humanTookOver = false;
+  if (currentSessionId && history && Array.isArray(history)) {
+    // Kolla de senaste 3 meddelandena för human-svar
+    const recentHistory = history.slice(-3);
+    humanTookOver = recentHistory.some(msg => msg.sender_type === 'human');
+    
+    if (humanTookOver) {
+      console.log('Human took over conversation, Sofia will not auto-respond');
+    }
+  }
+
+  // Sätt typing status till false när meddelande skickas
+  if (currentSessionId) {
+    try {
+      await supabase
+        .from('chat_sessions')
+        .update({ 
+          visitor_typing: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', currentSessionId);
+    } catch (err) {
+      console.log('Could not update typing status');
+    }
+  }
+
   // Spara användarens meddelande
   if (currentSessionId) {
     try {
@@ -199,6 +227,31 @@ VIKTIGT:
     role: 'user',
     parts: [{ text: prompt }]
   });
+
+  // OM PERSONAL HAR TAGIT ÖVER - SVARA INTE MED AI
+  if (humanTookOver) {
+    // Spara bara användarens meddelande, skicka inget AI-svar
+    // Personalen ser meddelandet i dashboarden och kan svara
+    
+    // Uppdatera session timestamp
+    if (currentSessionId) {
+      await supabase
+        .from('chat_sessions')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', currentSessionId);
+    }
+    
+    // Returnera tomt svar - widgeten visar inget
+    return res.status(200).json({
+      candidates: [{
+        content: {
+          parts: [{ text: '' }]
+        }
+      }],
+      sessionId: currentSessionId,
+      humanTookOver: true
+    });
+  }
 
   try {
     const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=' + API_KEY;
