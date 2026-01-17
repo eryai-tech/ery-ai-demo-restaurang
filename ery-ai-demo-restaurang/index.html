@@ -291,6 +291,29 @@
     }
     #ery-trigger:hover { transform: scale(1.1); }
     #ery-trigger svg { width: 30px; height: 30px; stroke: var(--charcoal); stroke-width: 2.5; }
+    
+    /* Notification badge */
+    #ery-trigger .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      width: 24px;
+      height: 24px;
+      background: #dc2626;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
     #ery-window {
       position: fixed;
       bottom: 100px;
@@ -358,12 +381,44 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
       border: 1px solid rgba(212,165,116,0.1);
     }
+    /* Human/staff messages */
+    .human {
+      background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+      color: var(--charcoal);
+      align-self: flex-start;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border: 1px solid #86efac;
+    }
+    .human .sender-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #166534;
+      margin-bottom: 4px;
+      display: block;
+    }
     .user {
       background: linear-gradient(135deg, var(--gold), #e0b885);
       color: var(--charcoal);
       align-self: flex-end;
     }
     .typing { font-size: 0.85rem; opacity: 0.6; font-style: italic; }
+    
+    /* New message indicator */
+    .new-message-banner {
+      background: #dcfce7;
+      border: 1px solid #86efac;
+      color: #166534;
+      padding: 0.75rem 1rem;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: none;
+    }
+    .new-message-banner:hover {
+      background: #bbf7d0;
+    }
+    
     .input-area {
       padding: 1rem;
       background: var(--white);
@@ -458,7 +513,7 @@
   </style>
 </head>
 <body>
-  <div class="top-bar">Reservationer öppna · Authentic Italian Cuisine · Since 1995</div>
+  <div class="top-bar">Reservationer oppna - Authentic Italian Cuisine - Since 1995</div>
   <nav>
     <div class="logo">BELLA ITALIA</div>
     <ul>
@@ -472,23 +527,23 @@
     <div class="hero-content">
       <div class="hero-label">Fine Italian Dining</div>
       <h1>BELLA<br>ITALIA</h1>
-      <p class="hero-tagline">En kulinarisk resa genom Italiens hjärta</p>
-      <a href="#menu" class="hero-btn">Upptäck Menyn</a>
+      <p class="hero-tagline">En kulinarisk resa genom Italiens hjarta</p>
+      <a href="#menu" class="hero-btn">Upptack Menyn</a>
     </div>
   </section>
   <section class="about-section" id="om">
     <div class="about-image"></div>
     <div class="about-content">
-      <div class="about-eyebrow">Vår Historia</div>
+      <div class="about-eyebrow">Var Historia</div>
       <h2>Italiensk Excellence</h2>
-      <p>Sedan 1995 har Bella Italia varit Stockholms främsta destination för autentisk italiensk gastronomi. Vår passion för italiensk matkultur speglas i varje rätt vi serverar.</p>
-      <p>Med över 25 års erfarenhet och en kökschef från Milano använder vi endast de finaste italienska råvarorna.</p>
+      <p>Sedan 1995 har Bella Italia varit Stockholms framsta destination for autentisk italiensk gastronomi. Var passion for italiensk matkultur speglas i varje ratt vi serverar.</p>
+      <p>Med over 25 ars erfarenhet och en kokschef fran Milano anvander vi endast de finaste italienska ravarorna.</p>
     </div>
   </section>
   <section class="menu-section" id="menu">
     <div class="menu-header">
-      <h2>Vår Meny</h2>
-      <p>Signaturrätter tillagade med passion och precision</p>
+      <h2>Var Meny</h2>
+      <p>Signaturratter tillagade med passion och precision</p>
     </div>
     <div class="menu-grid">
       <div class="dish-card">
@@ -496,7 +551,7 @@
         <div class="dish-content">
           <h3>Spaghetti Carbonara</h3>
           <span class="dish-price">189 kr</span>
-          <p>Klassisk romersk pasta med guanciale, ägg och pecorino romano.</p>
+          <p>Klassisk romersk pasta med guanciale, agg och pecorino romano.</p>
         </div>
       </div>
       <div class="dish-card">
@@ -504,7 +559,7 @@
         <div class="dish-content">
           <h3>Risotto ai Funghi</h3>
           <span class="dish-price">165 kr</span>
-          <p>Krämigt risotto med porcini-svamp, vitt vin och parmigiano reggiano.</p>
+          <p>Kramigt risotto med porcini-svamp, vitt vin och parmigiano reggiano.</p>
         </div>
       </div>
       <div class="dish-card">
@@ -512,7 +567,7 @@
         <div class="dish-content">
           <h3>Osso Buco Milanese</h3>
           <span class="dish-price">299 kr</span>
-          <p>Kalvskanka långkokt i vitt vin med gremolata och saffransrisotto.</p>
+          <p>Kalvskanka langkokt i vitt vin med gremolata och saffransrisotto.</p>
         </div>
       </div>
       <div class="dish-card">
@@ -528,7 +583,7 @@
         <div class="dish-content">
           <h3>Branzino al Forno</h3>
           <span class="dish-price">289 kr</span>
-          <p>Ugnsbakad havsabborre med citron, timjan och grönsaker.</p>
+          <p>Ugnsbakad havsabborre med citron, timjan och gronsaker.</p>
         </div>
       </div>
       <div class="dish-card">
@@ -536,7 +591,7 @@
         <div class="dish-content">
           <h3>Tiramisu Classico</h3>
           <span class="dish-price">75 kr</span>
-          <p>Vår signatur-dessert med mascarpone, espresso och kakao.</p>
+          <p>Var signatur-dessert med mascarpone, espresso och kakao.</p>
         </div>
       </div>
     </div>
@@ -544,39 +599,43 @@
   <section class="info-banner">
     <div class="info-container">
       <div class="info-box">
-        <h3>📍 Adress</h3>
-        <p>Strandvägen 42<br>114 56 Stockholm<br>Östermalm</p>
+        <h3>Adress</h3>
+        <p>Strandvagen 42<br>114 56 Stockholm<br>Ostermalm</p>
       </div>
       <div class="info-box">
-        <h3>⏰ Öppettider</h3>
-        <p>Måndag–Torsdag 11:00–22:00<br>Fredag–Lördag 11:00–23:00<br>Söndag 12:00–22:00</p>
+        <h3>Oppettider</h3>
+        <p>Mandag-Torsdag 11:00-22:00<br>Fredag-Lordag 11:00-23:00<br>Sondag 12:00-22:00</p>
       </div>
       <div class="info-box">
-        <h3>💬 Bordsreservation</h3>
-        <p>Kontakta vår AI-assistent Sofia<br>via chatten för direktreservation<br>och menyfrågor</p>
+        <h3>Bordsreservation</h3>
+        <p>Kontakta var AI-assistent Sofia<br>via chatten for direktreservation<br>och menyfragor</p>
       </div>
     </div>
   </section>
   <section class="cta-section" id="reservera">
     <h2>Reservera Bord</h2>
-    <p>Upplev äkta italiensk gastronomi i Stockholm. Använd vår intelligenta bokningsassistent Sofia för snabb och enkel reservation.</p>
-    <a href="#" onclick="toggleChat(); return false;" class="hero-btn">Öppna Chatten</a>
+    <p>Upplev akta italiensk gastronomi i Stockholm. Anvand var intelligenta bokningsassistent Sofia for snabb och enkel reservation.</p>
+    <a href="#" onclick="toggleChat(); return false;" class="hero-btn">Oppna Chatten</a>
   </section>
   <div id="ery-trigger" onclick="toggleChat()">
     <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
     </svg>
+    <span class="notification-badge" id="notification-badge">!</span>
   </div>
   <div id="ery-window">
     <header>
-      <h3>Sofia · Bella Italia</h3>
-      <span id="close-btn" onclick="toggleChat()">×</span>
+      <h3>Sofia - Bella Italia</h3>
+      <span id="close-btn" onclick="toggleChat()">x</span>
     </header>
+    <div id="new-message-banner" class="new-message-banner" onclick="scrollToBottom()">
+      Nytt svar fran restaurangen - Klicka for att se
+    </div>
     <div id="chat-box">
-      <div class="msg ai">Buongiorno! 🍝 Jag heter Sofia och hjälper dig gärna med bordsreservationer, menyfrågor eller rekommendationer. Hur kan jag assistera dig idag?</div>
+      <div class="msg ai">Buongiorno! Jag heter Sofia och hjalper dig garna med bordsreservationer, menyfragor eller rekommendationer. Hur kan jag assistera dig idag?</div>
     </div>
     <div class="input-area">
-      <input type="text" id="uIn" placeholder="Skriv här..." autocomplete="off">
+      <input type="text" id="uIn" placeholder="Skriv har..." autocomplete="off">
       <button onclick="send()">Skicka</button>
     </div>
     <div class="powered-by">
@@ -589,25 +648,222 @@
     </div>
   </div>
   <footer>
-    <p>&copy; 2026 Bella Italia Stockholm · Authentic Italian Dining Since 1995</p>
+    <p>&copy; 2026 Bella Italia Stockholm - Authentic Italian Dining Since 1995</p>
   </footer>
   <script>
+    // ============================================
+    // EryAI Chat Widget - Persistent Session
+    // ============================================
+    
+    const STORAGE_KEY = 'eryai_bella_italia_session';
+    const POLL_INTERVAL = 5000; // 5 seconds
+    
     let chatHistory = [];
     let sessionId = null;
+    let lastMessageCount = 0;
+    let pollTimer = null;
+    let chatOpen = false;
+    let hasUnreadMessages = false;
+
+    // Load session from localStorage on page load
+    function loadSession() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const data = JSON.parse(saved);
+          sessionId = data.sessionId;
+          lastMessageCount = data.messageCount || 0;
+          console.log('Session restored:', sessionId);
+          
+          // Load existing messages if we have a session
+          if (sessionId) {
+            loadMessagesFromServer();
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load session:', e);
+      }
+    }
+
+    // Save session to localStorage
+    function saveSession() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          sessionId: sessionId,
+          messageCount: lastMessageCount,
+          timestamp: Date.now()
+        }));
+      } catch (e) {
+        console.error('Failed to save session:', e);
+      }
+    }
+
+    // Load messages from server (for returning visitors)
+    async function loadMessagesFromServer() {
+      if (!sessionId) return;
+      
+      try {
+        const response = await fetch(`/api/messages?session_id=${sessionId}`);
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        if (data.messages && data.messages.length > 0) {
+          // Clear chat box except first greeting
+          const chatBox = document.getElementById('chat-box');
+          chatBox.innerHTML = '';
+          
+          // Add all messages
+          chatHistory = [];
+          data.messages.forEach(msg => {
+            addMessageToUI(msg.content, msg.role === 'user' ? 'user' : (msg.sender_type === 'human' ? 'human' : 'ai'), false);
+            chatHistory.push({ role: msg.role, content: msg.content, sender_type: msg.sender_type });
+          });
+          
+          lastMessageCount = data.messages.length;
+          saveSession();
+          scrollToBottom();
+        }
+      } catch (e) {
+        console.error('Failed to load messages:', e);
+      }
+    }
+
+    // Poll for new messages
+    async function pollForNewMessages() {
+      if (!sessionId) return;
+      
+      try {
+        const response = await fetch(`/api/messages?session_id=${sessionId}`);
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        if (data.messages && data.messages.length > lastMessageCount) {
+          // New messages!
+          const newMessages = data.messages.slice(lastMessageCount);
+          
+          newMessages.forEach(msg => {
+            // Only add messages we didn't send ourselves
+            if (msg.sender_type === 'human' || (msg.role === 'assistant' && !isRecentlySent(msg))) {
+              addMessageToUI(msg.content, msg.sender_type === 'human' ? 'human' : 'ai', true);
+              chatHistory.push({ role: msg.role, content: msg.content, sender_type: msg.sender_type });
+            }
+          });
+          
+          lastMessageCount = data.messages.length;
+          saveSession();
+          
+          // Show notification if chat is closed
+          if (!chatOpen) {
+            showNotificationBadge();
+          }
+        }
+      } catch (e) {
+        console.error('Poll error:', e);
+      }
+    }
+    
+    // Check if message was recently sent by us (to avoid duplicates)
+    function isRecentlySent(msg) {
+      const recentAI = chatHistory.slice(-2).find(h => h.role === 'assistant' && h.content === msg.content);
+      return !!recentAI;
+    }
+
+    // Start polling when chat opens
+    function startPolling() {
+      if (pollTimer) return;
+      pollTimer = setInterval(pollForNewMessages, POLL_INTERVAL);
+      console.log('Polling started');
+    }
+
+    // Stop polling when chat closes
+    function stopPolling() {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+        console.log('Polling stopped');
+      }
+    }
 
     function toggleChat() {
       const win = document.getElementById('ery-window');
-      win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
-      if (win.style.display === 'flex') document.getElementById('uIn').focus();
+      chatOpen = win.style.display !== 'flex';
+      win.style.display = chatOpen ? 'flex' : 'none';
+      
+      if (chatOpen) {
+        document.getElementById('uIn').focus();
+        hideNotificationBadge();
+        hideNewMessageBanner();
+        startPolling();
+        scrollToBottom();
+      } else {
+        // Keep polling even when closed to check for new messages
+        // stopPolling(); // Commented out - keep polling
+      }
+    }
+
+    function showNotificationBadge() {
+      const badge = document.getElementById('notification-badge');
+      badge.style.display = 'flex';
+      hasUnreadMessages = true;
+    }
+
+    function hideNotificationBadge() {
+      const badge = document.getElementById('notification-badge');
+      badge.style.display = 'none';
+      hasUnreadMessages = false;
+    }
+
+    function showNewMessageBanner() {
+      const banner = document.getElementById('new-message-banner');
+      banner.style.display = 'block';
+    }
+
+    function hideNewMessageBanner() {
+      const banner = document.getElementById('new-message-banner');
+      banner.style.display = 'none';
+    }
+
+    function scrollToBottom() {
+      const box = document.getElementById('chat-box');
+      box.scrollTop = box.scrollHeight;
+      hideNewMessageBanner();
+    }
+
+    function addMessageToUI(text, side, isNew = false) {
+      const box = document.getElementById('chat-box');
+      const div = document.createElement('div');
+      
+      if (side === 'human') {
+        div.className = 'msg human';
+        div.innerHTML = '<span class="sender-label">Personal svarar:</span>' + escapeHtml(text);
+      } else {
+        div.className = `msg ${side}`;
+        div.textContent = text;
+      }
+      
+      box.appendChild(div);
+      
+      if (isNew && chatOpen) {
+        // Check if user is scrolled up
+        const isScrolledUp = box.scrollHeight - box.scrollTop - box.clientHeight > 100;
+        if (isScrolledUp) {
+          showNewMessageBanner();
+        } else {
+          box.scrollTop = box.scrollHeight;
+        }
+      } else {
+        box.scrollTop = box.scrollHeight;
+      }
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
 
     function addMessage(text, side) {
-      const box = document.getElementById('chat-box');
-      const div = document.createElement('div');
-      div.className = `msg ${side}`;
-      div.textContent = text;
-      box.appendChild(div);
-      box.scrollTop = box.scrollHeight;
+      addMessageToUI(text, side, false);
       chatHistory.push({ role: side === 'user' ? 'user' : 'assistant', content: text });
     }
 
@@ -653,19 +909,23 @@
         const data = await response.json();
         removeTypingIndicator();
 
-        // Spara sessionId för framtida meddelanden
+        // Save sessionId
         if (data.sessionId) {
           sessionId = data.sessionId;
+          lastMessageCount = chatHistory.length + 1; // +1 for AI response
+          saveSession();
         }
 
         if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
           addMessage(data.candidates[0].content.parts[0].text, 'ai');
+          lastMessageCount++;
+          saveSession();
         } else {
-          addMessage('Förlåt, jag kunde inte förstå det. Kan du försöka igen?', 'ai');
+          addMessage('Forlat, jag kunde inte forsta det. Kan du forsoka igen?', 'ai');
         }
       } catch (error) {
         removeTypingIndicator();
-        addMessage('Ett fel uppstod. Vänligen försök igen!', 'ai');
+        addMessage('Ett fel uppstod. Vanligen forsok igen!', 'ai');
       } finally {
         input.disabled = false;
         button.disabled = false;
@@ -684,6 +944,40 @@
         if (href !== '#') document.querySelector(href).scrollIntoView({ behavior: 'smooth' });
       });
     });
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadSession();
+      // Start background polling to check for new messages
+      startPolling();
+      
+      // Auto-open chat if ?chat=open in URL (from email link)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('chat') === 'open') {
+        setTimeout(() => {
+          toggleChat();
+          // Clean up URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }, 500);
+      }
+    });
+
+    // Clear old sessions (older than 24 hours)
+    function cleanupOldSessions() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const data = JSON.parse(saved);
+          const age = Date.now() - (data.timestamp || 0);
+          if (age > 24 * 60 * 60 * 1000) { // 24 hours
+            localStorage.removeItem(STORAGE_KEY);
+            sessionId = null;
+            console.log('Old session cleared');
+          }
+        }
+      } catch (e) {}
+    }
+    cleanupOldSessions();
   </script>
 </body>
 </html>
