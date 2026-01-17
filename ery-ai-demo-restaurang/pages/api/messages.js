@@ -1,9 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
+// Support both env var naming conventions
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 export default async function handler(req, res) {
   // Enable CORS
@@ -25,7 +26,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'session_id is required' });
   }
 
+  // Validate UUID format
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(session_id)) {
+    return res.status(400).json({ error: 'Invalid session_id format' });
+  }
+
   try {
+    console.log('Fetching messages for session:', session_id);
+    
     // Fetch messages for session
     const { data: messages, error } = await supabase
       .from('chat_messages')
@@ -35,8 +44,10 @@ export default async function handler(req, res) {
 
     if (error) {
       console.error('Supabase error:', error);
-      return res.status(500).json({ error: 'Failed to fetch messages' });
+      return res.status(500).json({ error: 'Failed to fetch messages', details: error.message });
     }
+
+    console.log('Found', messages?.length || 0, 'messages');
 
     return res.status(200).json({ 
       messages: messages || [],
@@ -45,6 +56,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Server error:', error);
-    return res.status(500).json({ error: 'Server error' });
+    return res.status(500).json({ error: 'Server error', details: error.message });
   }
 }
