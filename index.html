@@ -905,9 +905,13 @@
       return div.innerHTML;
     }
 
-    function addMessage(text, side) {
+    function addMessage(text, side, senderType = null) {
       addMessageToUI(text, side, false);
-      chatHistory.push({ role: side === 'user' ? 'user' : 'assistant', content: text });
+      chatHistory.push({ 
+        role: side === 'user' ? 'user' : 'assistant', 
+        content: text,
+        sender_type: senderType || (side === 'user' ? 'user' : 'ai')
+      });
     }
 
     function addTypingIndicator() {
