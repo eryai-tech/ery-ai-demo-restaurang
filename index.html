@@ -669,8 +669,12 @@
   </footer>
   <script>
     // ============================================
-    // EryAI Chat Widget - Persistent Session v2
+    // EryAI Chat Widget - ERYAI-ENGINE INTEGRATION
     // ============================================
+    
+    // API Configuration
+    const ERYAI_ENGINE_URL = 'https://eryai-engine.vercel.app';
+    const CUSTOMER_SLUG = 'bella-italia';
     
     const STORAGE_KEY = 'eryai_bella_italia_session';
     const POLL_INTERVAL = 5000; // 5 seconds
@@ -743,7 +747,8 @@
       console.log('Loading messages for session:', sessionId);
       
       try {
-        const response = await fetch(`/api/messages?session_id=${sessionId}`);
+        // Use eryai-engine messages endpoint
+        const response = await fetch(`${ERYAI_ENGINE_URL}/api/messages?session_id=${sessionId}`);
         console.log('Messages API response status:', response.status);
         
         if (!response.ok) {
@@ -786,7 +791,7 @@
       if (!sessionId || isLoadingMessages) return;
       
       try {
-        const response = await fetch(`/api/messages?session_id=${sessionId}`);
+        const response = await fetch(`${ERYAI_ENGINE_URL}/api/messages?session_id=${sessionId}`);
         if (!response.ok) {
           console.log('Poll response not ok:', response.status);
           return;
@@ -871,7 +876,7 @@
       if (!sessionId) return;
       
       try {
-        const response = await fetch(`/api/typing?session_id=${sessionId}`);
+        const response = await fetch(`${ERYAI_ENGINE_URL}/api/typing?session_id=${sessionId}`);
         if (!response.ok) return;
         
         const data = await response.json();
@@ -893,7 +898,7 @@
       if (!sessionId) return;
       
       try {
-        await fetch(`/api/typing?session_id=${sessionId}`, {
+        await fetch(`${ERYAI_ENGINE_URL}/api/typing?session_id=${sessionId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ typing, sender: 'visitor' })
@@ -1036,6 +1041,9 @@
       if (typing) typing.remove();
     }
 
+    // ============================================
+    // MAIN SEND FUNCTION - ERYAI-ENGINE
+    // ============================================
     async function send() {
       const input = document.getElementById('uIn');
       const button = input.nextElementSibling;
@@ -1054,13 +1062,17 @@
       addTypingIndicator();
 
       try {
-        const response = await fetch('/api/restaurant', {
+        // ============================================
+        // CALL ERYAI-ENGINE API
+        // ============================================
+        const response = await fetch(`${ERYAI_ENGINE_URL}/api/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             prompt: text, 
             history: chatHistory.slice(0, -1),
-            sessionId: sessionId
+            sessionId: sessionId,
+            slug: CUSTOMER_SLUG
           })
         });
 
@@ -1079,11 +1091,9 @@
           console.log('Human took over, message sent silently to staff');
           // Inget meddelande visas - kunden ser bara sitt eget meddelande
           // Personal ser det i dashboarden och kan svara
-        } else if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
-          const aiText = data.candidates[0].content.parts[0].text;
-          if (aiText.trim()) {
-            addMessage(aiText, 'ai');
-          }
+        } else if (data.response && data.response.trim()) {
+          // ERYAI-ENGINE format: data.response
+          addMessage(data.response, 'ai');
         } else if (!data.humanTookOver) {
           addMessage('Förlåt, jag kunde inte förstå det. Kan du försöka igen?', 'ai');
         }
@@ -1121,6 +1131,8 @@
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
       console.log('Page loaded, initializing chat widget');
+      console.log('Using eryai-engine:', ERYAI_ENGINE_URL);
+      console.log('Customer slug:', CUSTOMER_SLUG);
       loadSession();
       
       // Start background polling
